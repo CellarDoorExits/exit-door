@@ -127,7 +127,7 @@ export class CeremonyStateMachine {
         type: "Ed25519Signature2020",
         created: timestamp,
         verificationMethod: didFromPublicKey(publicKey),
-        proofValue: btoa(String.fromCharCode(...sig)),
+        proofValue: Buffer.from(sig).toString("base64"),
       },
     };
   }
@@ -200,7 +200,7 @@ export class CeremonyStateMachine {
       type: "Ed25519Signature2020",
       created: new Date().toISOString(),
       verificationMethod: didFromPublicKey(witnessPublicKey),
-      proofValue: btoa(String.fromCharCode(...sig)),
+      proofValue: Buffer.from(sig).toString("base64"),
     };
   }
 

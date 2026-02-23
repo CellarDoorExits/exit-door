@@ -34,7 +34,7 @@ export function signMarker(marker: ExitMarker, privateKey: Uint8Array, publicKey
     const data = new TextEncoder().encode(canonical);
 
     const signature = sign(data, privateKey);
-    const proofValue = btoa(String.fromCharCode(...signature));
+    const proofValue = Buffer.from(signature).toString("base64");
 
     const proof: DataIntegrityProof = {
       type: "Ed25519Signature2020",
@@ -101,9 +101,7 @@ export function verifyMarker(marker: ExitMarker): VerificationResult {
     const { proof: _proof, ...rest } = marker;
     const canonical = canonicalize(rest);
     const data = new TextEncoder().encode(canonical);
-    const sigStr = atob(marker.proof.proofValue);
-    const signature = new Uint8Array(sigStr.length);
-    for (let i = 0; i < sigStr.length; i++) signature[i] = sigStr.charCodeAt(i);
+    const signature = new Uint8Array(Buffer.from(marker.proof.proofValue, "base64"));
 
     if (!verify(data, signature, publicKey)) {
       errors.push("Signature verification failed");

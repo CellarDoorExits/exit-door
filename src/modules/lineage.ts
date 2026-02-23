@@ -89,7 +89,7 @@ export function bindSuccessor(
     exitMarkerId: marker.id,
   });
   const sig = sign(new TextEncoder().encode(rotationData), privateKey);
-  const proofValue = btoa(String.fromCharCode(...sig));
+  const proofValue = Buffer.from(sig).toString("base64");
 
   const lineage: ModuleA = {
     ...marker.lineage,

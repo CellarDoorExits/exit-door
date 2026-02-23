@@ -99,7 +99,7 @@ export function createTenureAttestation(
     duration,
     startDate,
     attestedBy,
-    signature: btoa(String.fromCharCode(...sig)),
+    signature: Buffer.from(sig).toString("base64"),
     attesterDid: did,
   };
 }
@@ -119,9 +119,7 @@ export function verifyTenureAttestation(attestation: TenureAttestation): boolean
       attestedBy: attestation.attestedBy,
       attesterDid: attestation.attesterDid,
     });
-    const sigStr = atob(attestation.signature);
-    const sig = new Uint8Array(sigStr.length);
-    for (let i = 0; i < sigStr.length; i++) sig[i] = sigStr.charCodeAt(i);
+    const sig = new Uint8Array(Buffer.from(attestation.signature, "base64"));
     return verify(new TextEncoder().encode(data), sig, publicKey);
   } catch {
     return false;
@@ -194,7 +192,7 @@ export function createCommitment(
       type: "Ed25519Signature2020",
       created: committedAt,
       verificationMethod: did,
-      proofValue: btoa(String.fromCharCode(...sig)),
+      proofValue: Buffer.from(sig).toString("base64"),
     },
   };
 }
@@ -237,9 +235,7 @@ export function verifyCommitment(
       revealAfter: commitment.revealAfter,
       committerDid: commitment.committerDid,
     });
-    const sigStr = atob(commitment.proof.proofValue);
-    const sig = new Uint8Array(sigStr.length);
-    for (let i = 0; i < sigStr.length; i++) sig[i] = sigStr.charCodeAt(i);
+    const sig = new Uint8Array(Buffer.from(commitment.proof.proofValue, "base64"));
 
     if (!verify(new TextEncoder().encode(commitData), sig, publicKey)) {
       errors.push("Commitment signature verification failed");

@@ -116,7 +116,7 @@ describe("Property-Based Tests", () => {
             tampered[i] = proofBytes.charCodeAt(i);
           }
           tampered[tamperIdx] ^= 0x01;
-          const tamperedProof = btoa(String.fromCharCode(...tampered));
+          const tamperedProof = Buffer.from(tampered).toString("base64");
 
           const tamperedMarker = {
             ...signed,

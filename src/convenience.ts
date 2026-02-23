@@ -86,7 +86,13 @@ export function quickVerify(markerJson: string): VerificationResult {
  *
  * @throws ValidationError if JSON is invalid or marker fails validation
  */
+/** Maximum JSON input size for parsing (1 MB). */
+export const MAX_JSON_SIZE = 1_048_576;
+
 export function fromJSON(json: string): ExitMarker {
+  if (json.length > MAX_JSON_SIZE) {
+    throw new ValidationError([`JSON input too large: ${json.length} chars (max ${MAX_JSON_SIZE})`]);
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);

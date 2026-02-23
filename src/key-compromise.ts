@@ -36,7 +36,7 @@ export function createCompromiseMarker(
   signingKey: Uint8Array
 ): ExitMarker {
   const now = new Date().toISOString();
-  const publicKey = signingKey; // We need the public key for signing; caller provides private key
+  // signingKey is the new identity's private key, used for signing below
   
   const marker = {
     "@context": EXIT_CONTEXT_V1,
@@ -66,7 +66,7 @@ export function createCompromiseMarker(
   const canonical = canonicalize({ ...marker, proof: undefined });
   const data = new TextEncoder().encode(canonical);
   const signature = sign(data, signingKey);
-  const proofValue = btoa(String.fromCharCode(...signature));
+  const proofValue = Buffer.from(signature).toString("base64");
 
   marker.proof = {
     type: "Ed25519Signature2020",

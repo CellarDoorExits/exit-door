@@ -59,7 +59,7 @@ export function signEndorsement(
   return {
     text,
     signer: didFromPublicKey(publicKey),
-    signature: btoa(String.fromCharCode(...sig)),
+    signature: Buffer.from(sig).toString("base64"),
     timestamp,
   };
 }

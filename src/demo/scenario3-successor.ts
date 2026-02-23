@@ -66,7 +66,7 @@ async function main() {
     new TextEncoder().encode(bindingPayload),
     original.privateKey
   );
-  const bindingProofValue = btoa(String.fromCharCode(...bindingSignature));
+  const bindingProofValue = Buffer.from(bindingSignature).toString("base64");
 
   const continuityProof: ContinuityProof = {
     type: ContinuityProofType.KeyRotationBinding,

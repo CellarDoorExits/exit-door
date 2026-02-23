@@ -71,7 +71,7 @@ export function signAttestation(
     moduleType: "originAttestation",
     originStatus: status,
     originStatement: statement,
-    originSignature: btoa(String.fromCharCode(...sig)),
+    originSignature: Buffer.from(sig).toString("base64"),
     originDid: didFromPublicKey(originPublicKey),
     timestamp,
   };

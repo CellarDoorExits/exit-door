@@ -217,9 +217,13 @@ export function serializeForTransport(marker: ExitMarker): Buffer {
  * @returns The deserialized EXIT marker.
  * @throws {Error} If the buffer is too short or truncated.
  */
+/** Maximum payload size for deserialization (1 MB). */
+export const MAX_PAYLOAD_SIZE = 1_048_576;
+
 export function deserializeFromTransport(buffer: Buffer): ExitMarker {
   if (buffer.length < 4) throw new Error("Transport buffer too short");
   const length = buffer.readUInt32BE(0);
+  if (length > MAX_PAYLOAD_SIZE) throw new Error(`Transport payload too large: ${length} bytes (max ${MAX_PAYLOAD_SIZE})`);
   if (buffer.length < 4 + length) throw new Error("Transport buffer truncated");
   const json = buffer.slice(4, 4 + length).toString("utf-8");
   return JSON.parse(json) as ExitMarker;

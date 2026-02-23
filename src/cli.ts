@@ -278,6 +278,7 @@ program
   .option("--reason <text>", "Human-readable reason for departure")
   .option("--sign", "Sign the marker (uses --key if provided, otherwise generates a keypair)")
   .option("--key <path>", "Path to private key file (hex or base64 encoded)")
+  .option("--show-keys", "Print generated private key material (DANGER: do not use in production logs)")
   .addHelpText("after", `
 Examples:
   $ exit create --origin example.com
@@ -295,7 +296,7 @@ Examples:
   $ exit create --origin example.com --status disputed --reason "Banned unfairly"
     Create a marker with disputed standing
 `)
-  .action(withErrorHandling((opts) => {
+  .action(withErrorHandling(async (opts) => {
     let privateKey: Uint8Array | undefined;
     let publicKey: Uint8Array | undefined;
     let subject = opts.subject;
@@ -305,7 +306,7 @@ Examples:
       privateKey = readKeyFile(opts.key);
 
       try {
-        const ed = require("@noble/ed25519") as typeof import("@noble/ed25519");
+        const ed = await import("@noble/ed25519");
         publicKey = ed.getPublicKey(privateKey);
       } catch (e: any) {
         error(
@@ -326,15 +327,18 @@ Examples:
       privateKey = kp.privateKey;
       publicKey = kp.publicKey;
       if (!subject) subject = didFromPublicKey(publicKey);
-      // Print generated key info to stderr so stdout stays clean JSON
+      // Print generated key info to stderr (private key only if --show-keys)
+      const keypairInfo: Record<string, string> = {
+        did: didFromPublicKey(publicKey),
+        publicKey: toHex(publicKey),
+      };
+      if (opts.showKeys) {
+        keypairInfo.privateKey = toHex(privateKey);
+      } else {
+        keypairInfo.privateKey = "[REDACTED — use --show-keys to display]";
+      }
       process.stderr.write(
-        JSON.stringify({
-          _generated_keypair: {
-            did: didFromPublicKey(publicKey),
-            publicKey: toHex(publicKey),
-            privateKey: toHex(privateKey),
-          },
-        }) + "\n"
+        JSON.stringify({ _generated_keypair: keypairInfo }) + "\n"
       );
     }
 
@@ -564,20 +568,40 @@ Security:
   The private key is printed to stdout. Store it securely and never share it.
   Anyone with the private key can sign EXIT markers as your identity.
 `)
-  .action(withErrorHandling(() => {
+  .option("--show-keys", "Print private key to stdout (DANGER: do not use in production logs)")
+  .action(withErrorHandling((opts) => {
     const kp = generateKeyPair();
     const did = didFromPublicKey(kp.publicKey);
-    console.log(
-      JSON.stringify(
-        {
-          did,
-          publicKey: toHex(kp.publicKey),
-          privateKey: toHex(kp.privateKey),
-        },
-        null,
-        2
-      )
-    );
+    if (opts.showKeys) {
+      console.log(
+        JSON.stringify(
+          {
+            did,
+            publicKey: toHex(kp.publicKey),
+            privateKey: toHex(kp.privateKey),
+          },
+          null,
+          2
+        )
+      );
+    } else {
+      // Write private key to file with restrictive permissions
+      const keyFileName = `${did.replace(/[^a-zA-Z0-9]/g, "_")}.key`;
+      writeFileSync(keyFileName, toHex(kp.privateKey), { mode: 0o600 });
+      console.log(
+        JSON.stringify(
+          {
+            did,
+            publicKey: toHex(kp.publicKey),
+            privateKeyFile: keyFileName,
+            privateKey: "[REDACTED — saved to file. Use --show-keys to print to stdout instead]",
+          },
+          null,
+          2
+        )
+      );
+      process.stderr.write(`⚠ Private key written to ${keyFileName} (mode 0600)\n`);
+    }
   }));
 
 // ─── exit anchor ─────────────────────────────────────────────────────────────

@@ -25,7 +25,7 @@ function toHex(bytes: Uint8Array): string {
 
 function signPayload(data: string, privateKey: Uint8Array): string {
   const sig = edSign(new TextEncoder().encode(data), privateKey);
-  return btoa(String.fromCharCode(...sig));
+  return Buffer.from(sig).toString("base64");
 }
 
 function verifyPayload(
@@ -33,9 +33,7 @@ function verifyPayload(
   signature: string,
   publicKey: Uint8Array
 ): boolean {
-  const sigStr = atob(signature);
-  const sig = new Uint8Array(sigStr.length);
-  for (let i = 0; i < sigStr.length; i++) sig[i] = sigStr.charCodeAt(i);
+  const sig = new Uint8Array(Buffer.from(signature, "base64"));
   return edVerify(new TextEncoder().encode(data), sig, publicKey);
 }
 
