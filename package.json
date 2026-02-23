@@ -57,11 +57,11 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/HOLOS-git/cellar-door-exit.git"
+    "url": "https://github.com/CellarDoorExits/exit-door.git"
   },
-  "homepage": "https://github.com/HOLOS-git/cellar-door-exit",
+  "homepage": "https://github.com/CellarDoorExits/exit-door",
   "bugs": {
-    "url": "https://github.com/HOLOS-git/cellar-door-exit/issues"
+    "url": "https://github.com/CellarDoorExits/exit-door/issues"
   },
   "keywords": [
     "exit",

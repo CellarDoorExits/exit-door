@@ -264,7 +264,7 @@ We welcome NIST's engagement with these questions and would be glad to provide a
 - W3C. (2024). "JSON-LD 1.1." W3C Recommendation. https://www.w3.org/TR/json-ld11/
 - Smith, S. M. (2021). "Key Event Receipt Infrastructure (KERI)." IETF Internet-Draft. https://datatracker.ietf.org/doc/draft-ssmith-keri/
 - NIST. (2026). "NIST Launches AI Agent Standards Initiative." https://www.nist.gov/news-events/news/2026/02/nist-launches-ai-agent-standards-initiative
-- EXIT Protocol Specification v1.0-draft. (2026). https://github.com/cellar-door/exit [Apache 2.0]
+- EXIT Protocol Specification v1.0-draft. (2026). https://github.com/CellarDoorExits/exit-door [Apache 2.0]
 
 ---
 
