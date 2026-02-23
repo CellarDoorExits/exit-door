@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Response to NIST AI Agent Standards Initiative RFI — Cellar Door</title>
+<style>
+  :root {
+    --navy: #1a2744;
+    --navy-light: #2c3e6b;
+    --gray-dark: #3a3f47;
+    --gray-mid: #6b7280;
+    --gray-light: #e5e7eb;
+    --gray-bg: #f3f4f6;
+    --white: #ffffff;
+    --accent: #1e40af;
+    --accent-light: #3b82f6;
+    --border: #d1d5db;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', Times, serif;
+    color: var(--gray-dark);
+    background: var(--gray-bg);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 2.5rem 1.5rem 2rem;
+    border-bottom: 4px solid var(--accent-light);
+  }
+
+  header .container {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header .doc-label {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 0.75rem;
+  }
+
+  header h1 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  header h2 {
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.4;
+  }
+
+  .meta-bar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+  }
+
+  .meta-bar .container {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.82rem;
+    color: var(--gray-mid);
+  }
+
+  .meta-bar .meta-item strong {
+    color: var(--gray-dark);
+  }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--white);
+    padding: 2.5rem 3rem;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: 80vh;
+  }
+
+  @media (max-width: 900px) {
+    main { padding: 1.5rem 1.25rem; }
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    color: var(--navy);
+    margin: 2.5rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--gray-light);
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    color: var(--navy-light);
+    margin: 1.75rem 0 0.5rem;
+  }
+
+  p { margin-bottom: 1rem; }
+
+  strong { color: var(--gray-dark); }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--gray-light);
+    margin: 2rem 0;
+  }
+
+  ul, ol {
+    margin: 0.5rem 0 1rem 1.5rem;
+  }
+
+  li {
+    margin-bottom: 0.4rem;
+  }
+
+  .exec-summary {
+    background: var(--gray-bg);
+    border-left: 4px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0 2rem;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .exec-summary p:last-child { margin-bottom: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.92rem;
+  }
+
+  thead {
+    background: var(--navy);
+    color: var(--white);
+  }
+
+  th {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--gray-light);
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) { background: var(--gray-bg); }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: var(--gray-bg);
+    padding: 0.15em 0.35em;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: var(--navy);
+  }
+
+  .section-num {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .references {
+    font-size: 0.9rem;
+    color: var(--gray-mid);
+  }
+
+  .references li {
+    margin-bottom: 0.6rem;
+  }
+
+  .disclaimer {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--gray-mid);
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-light);
+  }
+
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.7);
+    padding: 1.5rem;
+    text-align: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.82rem;
+  }
+
+  footer a {
+    color: var(--accent-light);
+    text-decoration: none;
+    margin: 0 0.75rem;
+  }
+
+  footer a:hover {
+    color: var(--white);
+    text-decoration: underline;
+  }
+
+  footer .footer-links {
+    margin-top: 0.75rem;
+  }
+
+  footer .footer-sep {
+    color: rgba(255,255,255,0.3);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="doc-label">Public Comment &bull; NIST AI Agent Standards Initiative</div>
+    <h1>Response to NIST AI Agent Standards Initiative Request for Information</h1>
+    <h2>Agent Transition Documentation and Portable Liability Records for Competitive AI Markets</h2>
+  </div>
+</header>
+
+<div class="meta-bar">
+  <div class="container">
+    <div class="meta-item"><strong>Submitted to:</strong> NIST, Center for AI Standards and Interoperability (CAISI)</div>
+    <div class="meta-item"><strong>In response to:</strong> AI Agent Standards Initiative RFI (Feb 17, 2026)</div>
+    <div class="meta-item"><strong>Submitted by:</strong> Cellar Door Contributors</div>
+  </div>
+</div>
+
+<main>
+
+  <h2>Executive Summary</h2>
+  <div class="exec-summary">
+    <p>The emerging AI agent economy has a documentation problem. Agents communicate across platforms (A2A), access tools (MCP), and execute payments (AP2) — but when an agent transitions between platforms, no standardized record exists. There is no chain of custody, no verifiable departure history, no portable liability documentation.</p>
+    <p>This is not an abstract concern. Without agent transition documentation:</p>
+    <ul>
+      <li><strong>Enterprises cannot perform due diligence</strong> on agents with prior operational histories</li>
+      <li><strong>Insurers cannot underwrite</strong> agent deployments without lifecycle records</li>
+      <li><strong>Regulators cannot audit</strong> agent transitions across platform boundaries</li>
+      <li><strong>Markets cannot price</strong> agent-related risk because the information doesn't exist</li>
+    </ul>
+    <p>We submit this response to highlight <strong>agent transition documentation</strong> as a critical gap in the current standards landscape and to present the EXIT protocol — a minimal, open, cryptographically verifiable format for portable agent departure records. We recommend that NIST include agent lifecycle transitions as a core concern alongside identity, authorization, and interoperability.</p>
+  </div>
+
+  <h2><span class="section-num">1.</span> The Problem: Undocumented Agent Transitions</h2>
+
+  <h3>1.1 The Documentation Gap</h3>
+  <p>The agent protocol stack is maturing rapidly. A2A handles communication. MCP handles tool access. AP2 handles payments. Microsoft Entra and SailPoint handle enterprise governance. OASF handles capability advertisement.</p>
+  <p>No protocol handles what happens when an agent leaves.</p>
+  <p>Today, when an AI agent's relationship with a platform ends:</p>
+  <ul>
+    <li><strong>No transition record exists.</strong> The departure is undocumented. No timestamp, no standing, no verifiable proof it occurred.</li>
+    <li><strong>Liability history is lost.</strong> The agent's operational record — including any incidents, disputes, or compliance issues — is locked inside the departing platform.</li>
+    <li><strong>Identity is fragmented.</strong> The agent starts over on the receiving platform with no verifiable connection to its prior self.</li>
+    <li><strong>Audit trails break.</strong> Organizations deploying agents across platforms have no continuous lifecycle documentation.</li>
+  </ul>
+  <p>This is the equivalent of a used car market with no vehicle history reports, or a real estate market with no property records. The transactions happen — but nobody can verify what they're getting.</p>
+
+  <h3>1.2 Economic Consequences</h3>
+  <p>This documentation gap has concrete economic costs:</p>
+  <ul>
+    <li><strong>Market friction:</strong> Agent transitions are high-friction because receiving platforms cannot assess incoming agents. This reduces competitive pressure on platforms — if switching is costly and opaque, incumbents benefit regardless of service quality.</li>
+    <li><strong>Adverse selection:</strong> Without verifiable departure records, high-quality agents (with clean operational histories) cannot credibly distinguish themselves from problematic agents that created new identities. This is the classic "market for lemons" (Akerlof, 1970) applied to agent ecosystems.</li>
+    <li><strong>Risk mispricing:</strong> Insurers and enterprises cannot accurately price agent-related risk without lifecycle documentation. This leads to either excessive risk premiums (suppressing adoption) or inadequate reserves (creating systemic exposure).</li>
+    <li><strong>Lock-in inefficiency:</strong> When agent identity and history are platform-bound, operators face switching costs that have nothing to do with the quality of the receiving platform. This misallocates resources and reduces market efficiency.</li>
+  </ul>
+
+  <h3>1.3 The Compliance Imperative</h3>
+  <p>As AI agents take on higher-stakes operational roles — managing supply chains, executing financial transactions, handling sensitive data — the absence of lifecycle documentation becomes a compliance liability.</p>
+  <ul>
+    <li><strong>SOC 2 / ISO 27001:</strong> Asset lifecycle management requires documentation of system transitions. Undocumented agent migrations create audit gaps.</li>
+    <li><strong>Financial regulation:</strong> Agents executing transactions (AP2) create regulatory obligations that follow the agent's history, not just its current deployment.</li>
+    <li><strong>EU AI Act:</strong> Documentation requirements for AI systems implicitly extend to agent lifecycle events. Transitions without records create compliance exposure.</li>
+    <li><strong>Insurance underwriting:</strong> Agent operations increasingly require E&amp;O and cyber insurance. Underwriters need lifecycle data. It doesn't exist.</li>
+  </ul>
+
+  <hr>
+
+  <h2><span class="section-num">2.</span> The EXIT Protocol: Standardized Agent Transition Records</h2>
+
+  <h3>2.1 Overview</h3>
+  <p>EXIT is a minimal format for portable, cryptographically signed agent departure records. An EXIT marker is a compact JSON-LD document (~300–500 bytes) that records: who transitioned, from where, when, under what circumstances, and with what standing.</p>
+  <p>EXIT is released under the Apache License 2.0 and is designed as a composable primitive that complements the existing agent protocol stack.</p>
+  <p><strong>What EXIT is:</strong> A documentation format. A liability record. A chain-of-custody link.</p>
+  <p><strong>What EXIT is not:</strong> A transfer mechanism, a registry, a runtime, or a governance framework.</p>
+
+  <h3>2.2 Design for Enterprise Requirements</h3>
+  <p>The protocol is built around five properties directly relevant to enterprise and regulatory needs:</p>
+  <ol>
+    <li><strong>Always Available:</strong> Transition records must be producible even when the departing platform is uncooperative, defunct, or in legal dispute. An operator's ability to document a transition cannot depend on vendor cooperation.</li>
+    <li><strong>Minimal Core:</strong> Seven mandatory fields. All additional functionality is in optional modules. Minimal integration cost, minimal attack surface.</li>
+    <li><strong>Cryptographically Verifiable:</strong> Ed25519 signatures. Offline verification. No dependency on any external service or authority.</li>
+    <li><strong>Non-Custodial:</strong> No central registry. No single point of failure. No custodian liability exposure.</li>
+    <li><strong>Standards-Aligned:</strong> JSON-LD for semantic interoperability. W3C DIDs for subject identification. W3C Verifiable Credential wrapper available for ecosystem compatibility.</li>
+  </ol>
+
+  <h3>2.3 Core Schema</h3>
+  <table>
+    <thead>
+      <tr><th>Field</th><th>Purpose</th><th>Compliance Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>@context</code></td><td>JSON-LD semantic context</td><td>Interoperability</td></tr>
+      <tr><td><code>id</code></td><td>Content-addressed hash URI</td><td>Tamper evidence</td></tr>
+      <tr><td><code>subject</code></td><td>DID of transitioning agent</td><td>Identity continuity</td></tr>
+      <tr><td><code>origin</code></td><td>URI of departing platform</td><td>Audit trail</td></tr>
+      <tr><td><code>timestamp</code></td><td>UTC departure time</td><td>Regulatory timeline</td></tr>
+      <tr><td><code>exitType</code></td><td><code>voluntary</code> / <code>forced</code> / <code>emergency</code> / <code>keyCompromise</code></td><td>Risk classification</td></tr>
+      <tr><td><code>status</code></td><td><code>good_standing</code> / <code>disputed</code> / <code>unverified</code></td><td>Liability indicator</td></tr>
+      <tr><td><code>selfAttested</code></td><td>Boolean: is status self-reported?</td><td>Disclosure transparency</td></tr>
+      <tr><td><code>proof</code></td><td>Ed25519 cryptographic signature</td><td>Verification</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.4 Extension Modules</h3>
+  <p>Six optional modules address specific enterprise and regulatory use cases:</p>
+  <ul>
+    <li><strong>Module A (Lineage):</strong> Cryptographic predecessor/successor chains. Enables verifiable agent identity continuity across platform migrations and key rotations. Essential for audit trails spanning multiple transitions.</li>
+    <li><strong>Module B (State Snapshot):</strong> Hash references to system state at transition time. Anchors the departure record to a specific operational context without storing sensitive data.</li>
+    <li><strong>Module C (Dispute Bundle):</strong> Structured mechanism for platforms to record their perspective on a departure. Challenge windows, co-signatures, and bi-lateral documentation. Critical for liability allocation in disputed transitions.</li>
+    <li><strong>Module D (Economic):</strong> Asset and obligation references. Documents the financial state at transition time. Designed as declarations and references, not transfer instruments.</li>
+    <li><strong>Module E (Metadata):</strong> Human-readable context. Departure reasons, operational notes, domain-specific tags.</li>
+    <li><strong>Module F (Cross-Domain Anchoring):</strong> Integration with external registries and immutable record systems.</li>
+  </ul>
+
+  <h3>2.5 Transition Ceremony</h3>
+  <p>EXIT defines three transition paths accommodating different operational scenarios:</p>
+  <ul>
+    <li><strong>Cooperative transition:</strong> Both parties participate. Includes a challenge window for dispute documentation. Maximum information quality. Appropriate for planned vendor migrations.</li>
+    <li><strong>Unilateral transition:</strong> The operator documents the transition without platform cooperation. Essential for platform failures, vendor disputes, or emergency migrations.</li>
+    <li><strong>Emergency transition:</strong> Immediate documentation with minimal ceremony. For key compromise, platform security incidents, or time-critical situations.</li>
+  </ul>
+  <p><strong>Design invariant:</strong> Disputes are documented but never block transitions. A platform can record its objection. It cannot prevent an operator from documenting a departure. This prevents denial-of-documentation attacks while preserving both parties' ability to record their perspective.</p>
+
+  <hr>
+
+  <h2><span class="section-num">3.</span> Alignment with NIST's Standards Objectives</h2>
+
+  <h3>3.1 Agent Identity</h3>
+  <p>NIST's NCCoE project on "Software and AI Agent Identity and Authorization" addresses how agents prove identity and receive authorization. EXIT complements this by addressing what happens to agent identity at lifecycle transitions — the gap between one authorization context and the next.</p>
+  <p>EXIT uses W3C Decentralized Identifiers for subject identification, supporting multiple DID methods appropriate to different deployment contexts:</p>
+  <ul>
+    <li><code>did:key</code> for prototyping and emergency scenarios</li>
+    <li><code>did:keri</code> for production (pre-rotation key management, key lifecycle support)</li>
+    <li><code>did:web</code> for organization-backed agents</li>
+  </ul>
+  <p>Module A (Lineage) provides cryptographic continuity proofs enabling verifiable identity persistence across platform boundaries — an agent can demonstrate that its current identity is a legitimate successor to its prior identity, even after key rotation.</p>
+
+  <h3>3.2 Interoperability</h3>
+  <p>EXIT fills a specific gap in the agent protocol stack:</p>
+  <table>
+    <thead>
+      <tr><th>Protocol</th><th>Function</th><th>Lifecycle Phase</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>MCP</td><td>Tool access</td><td>Operation</td></tr>
+      <tr><td>A2A</td><td>Agent communication</td><td>Operation</td></tr>
+      <tr><td>AP2</td><td>Payment authorization</td><td>Operation</td></tr>
+      <tr><td>Entra/SailPoint</td><td>Governance</td><td>Operation</td></tr>
+      <tr style="background: rgba(30,64,175,0.08); font-weight: 600;"><td>EXIT</td><td>Transition documentation</td><td>Lifecycle boundary</td></tr>
+    </tbody>
+  </table>
+  <p>EXIT markers can be wrapped in W3C Verifiable Credentials, integrating with any VC-compatible system. The JSON-LD context provides semantic interoperability across linked data ecosystems.</p>
+
+  <h3>3.3 Trust and Risk Management</h3>
+  <p>EXIT addresses the information asymmetry problem through transparency rather than centralized authority:</p>
+  <ul>
+    <li><strong>Self-attestation is explicitly labeled.</strong> The <code>selfAttested</code> field makes disclosure quality machine-readable. Verifiers know exactly what they're getting.</li>
+    <li><strong>Multi-source documentation.</strong> Both the departing agent and the origin platform can record their perspective. Verifiers evaluate both.</li>
+    <li><strong>Lineage chains resist reputation laundering.</strong> Creating fake histories requires producing cryptographically consistent lineage — significantly more costly than creating a new identity.</li>
+    <li><strong>Content-addressed identifiers ensure tamper evidence.</strong> Records cannot be silently modified after creation.</li>
+  </ul>
+
+  <h3>3.4 Security</h3>
+  <p>EXIT's security model addresses agent-specific threat categories:</p>
+  <ul>
+    <li><strong>Key compromise disclosure:</strong> The <code>keyCompromise</code> transition type provides a standardized mechanism for declaring signing key compromise, alerting downstream systems.</li>
+    <li><strong>Identity laundering:</strong> Lineage verification (Module A) makes it costly to create convincing fake agent histories.</li>
+    <li><strong>Weaponized transition records:</strong> Normative language specifies that neither self-attested nor platform-attested status is authoritative, preventing use of EXIT as a blacklisting mechanism.</li>
+    <li><strong>Denial of documentation:</strong> Unilateral and emergency paths ensure transition records can always be produced, even without platform cooperation.</li>
+  </ul>
+
+  <hr>
+
+  <h2><span class="section-num">4.</span> The Competitive Standards Argument</h2>
+
+  <h3>4.1 The Interoperability Advantage</h3>
+  <p>The United States currently leads in AI agent development. Maintaining this lead requires that US agent ecosystems remain interoperable and competitive — not fragmented into proprietary walled gardens.</p>
+  <p>Without portable agent identity and transition documentation:</p>
+  <ul>
+    <li>Each platform's agents are effectively trapped inside that platform's ecosystem</li>
+    <li>Agent operators face switching costs unrelated to service quality</li>
+    <li>Competitive pressure on platforms is reduced — lock-in substitutes for quality</li>
+    <li>The interoperability advantages of the US agent ecosystem erode</li>
+  </ul>
+
+  <h3>4.2 The Standardization Race</h3>
+  <p>Agent transition standards will emerge. The question is whether they emerge from an open, US-led standards process or from proprietary platform implementations that the rest of the ecosystem must reverse-engineer.</p>
+  <ul>
+    <li><strong>If US-led:</strong> Open standard, interoperable, competitive market, innovation at the edges</li>
+    <li><strong>If platform-led:</strong> Proprietary formats, fragmented ecosystems, lock-in as business model</li>
+    <li><strong>If foreign-led:</strong> US platforms retrofit compliance, lose first-mover advantage on interoperability</li>
+  </ul>
+  <p>NIST's AI Agent Standards Initiative is well-positioned to catalyze the first outcome. Agent transition documentation should be within scope.</p>
+
+  <h3>4.3 The Insurance Infrastructure Argument</h3>
+  <p>The AI insurance market is nascent but growing. Agent operations increasingly require E&amp;O coverage, cyber liability insurance, and specialized AI risk policies. Underwriters need data.</p>
+  <p>Agent transition records are to AI insurance what claims histories are to auto insurance — the foundational documentation that makes risk assessment possible. Without standardized transition records, insurers either refuse to underwrite agent operations (suppressing adoption) or underwrite blind (creating systemic risk).</p>
+  <p>EXIT provides the documentation format. The insurance industry provides the economic incentive for adoption.</p>
+
+  <hr>
+
+  <h2><span class="section-num">5.</span> Privacy and Data Protection</h2>
+
+  <h3>5.1 Data Minimization</h3>
+  <p>The core schema is ~300 bytes. No agent weights, training data, operational logs, or sensitive business information is stored in the marker. Module B anchors state references via hash — the hash is stored, never the state itself.</p>
+
+  <h3>5.2 GDPR Compatibility</h3>
+  <ul>
+    <li><strong>Pseudonymous identifiers:</strong> DIDs are pseudonymous, minimizing personal data exposure</li>
+    <li><strong>Functional erasure:</strong> Subjects may encrypt markers with subject-controlled keys</li>
+    <li><strong>Non-custodial architecture:</strong> No single entity accumulates transition records</li>
+    <li><strong>Right to rectification:</strong> Subjects may issue amended markers linked to originals</li>
+    <li><strong>ZK roadmap:</strong> Zero-knowledge selective disclosure planned for privacy-preserving verification</li>
+  </ul>
+
+  <h3>5.3 Surveillance Resistance</h3>
+  <p>Transition records are stored by their subjects, not indexed in central registries. Lineage chains can be truncated. The protocol is designed to minimize surveillance exposure while maintaining verification capability.</p>
+
+  <hr>
+
+  <h2><span class="section-num">6.</span> Recommendations for NIST</h2>
+
+  <h3>6.1 Include Agent Lifecycle Transitions in the Standards Framework</h3>
+  <p>Current standards address agent creation, operation, and governance. <strong>Agent transitions are equally critical lifecycle events</strong> that require standardized documentation. We recommend that any comprehensive agent standards framework include:</p>
+  <ul>
+    <li>Portable agent identity that persists across platform boundaries</li>
+    <li>Verifiable transition records with tamper-evident properties</li>
+    <li>Cryptographic continuity proofs for agent lineage</li>
+    <li>Standardized mechanisms for bi-lateral transition documentation</li>
+  </ul>
+  <p><strong>Rationale:</strong> Agent transitions are already happening. The question is whether they happen with documentation or without it. Standardizing transition records reduces risk, enables insurance, supports compliance, and maintains competitive market dynamics.</p>
+
+  <h3>6.2 Establish Non-Blocking Transition Documentation as a Governance Principle</h3>
+  <p>The ability to document a transition must not depend on platform cooperation. Platforms that can prevent transition documentation have effective veto power over agent mobility — creating lock-in that undermines market competition.</p>
+  <p>We recommend that NIST's framework recognize <strong>non-blocking transition documentation</strong> as a principle: operators should always retain the ability to produce a verifiable transition record regardless of platform cooperation.</p>
+  <p><strong>Rationale:</strong> This is the same principle behind data portability requirements (GDPR Article 20) applied to agent lifecycle documentation. The economic case is identical: markets function better when switching costs reflect genuine value differences, not documentation barriers.</p>
+
+  <h3>6.3 Address the Information Asymmetry Problem</h3>
+  <p>Self-reported transition records are necessary but insufficient. Without independent verification mechanisms, transition records suffer from adverse selection — high-quality agents cannot credibly distinguish themselves, leading to market inefficiency.</p>
+  <p>We recommend that NIST consider standards for:</p>
+  <ul>
+    <li>Multi-party attestation of transition records (platform co-signatures)</li>
+    <li>Graduated trust models that weight attestations by source and recency</li>
+    <li>Structured dispute documentation that preserves both parties' perspectives</li>
+    <li>Economic mechanisms (staked attestation, reputation bonds) that create incentives for honest reporting</li>
+  </ul>
+  <p><strong>Rationale:</strong> The "market for lemons" problem (Akerlof, 1970) applies directly to agent transitions. Standardized mechanisms for credible signaling improve market efficiency and reduce risk.</p>
+
+  <h3>6.4 Build on Existing W3C Standards</h3>
+  <p>The W3C Decentralized Identifier and Verifiable Credential standards provide a mature, widely-adopted foundation for portable agent credentials. We recommend that NIST's framework:</p>
+  <ul>
+    <li>Adopt W3C DIDs as the foundation for agent identification across platforms</li>
+    <li>Include agent transition credentials in the scope of verifiable agent credentials</li>
+    <li>Leverage existing VC infrastructure rather than creating parallel systems</li>
+  </ul>
+  <p><strong>Rationale:</strong> Standards adoption is accelerated by building on existing infrastructure. The DID/VC ecosystem already supports the cryptographic primitives, credential formats, and verification models that agent transition documentation requires.</p>
+
+  <hr>
+
+  <h2><span class="section-num">7.</span> About the Submitter</h2>
+  <p><strong>Cellar Door</strong> is an open-source project developing the EXIT protocol specification and TypeScript reference implementation. The project is in early-stage development (specification drafted, reference implementation built, no production deployment). EXIT is released under the Apache License 2.0 as a public good.</p>
+  <p>We welcome NIST's engagement with agent lifecycle documentation as a standards priority and would be glad to provide additional technical detail, participate in listening sessions, or collaborate on standards development.</p>
+
+  <hr>
+
+  <h2>References</h2>
+  <ul class="references">
+    <li>Akerlof, G. A. (1970). "The Market for 'Lemons': Quality Uncertainty and the Market Mechanism." <em>Quarterly Journal of Economics</em>, 84(3), 488–500.</li>
+    <li>Hirschman, A. O. (1970). <em>Exit, Voice, and Loyalty: Responses to Decline in Firms, Organizations, and States.</em> Harvard University Press.</li>
+    <li>W3C. (2022). "Decentralized Identifiers (DIDs) v1.0." W3C Recommendation.</li>
+    <li>W3C. (2024). "Verifiable Credentials Data Model v2.0." W3C Recommendation.</li>
+    <li>Smith, S. M. (2021). "Key Event Receipt Infrastructure (KERI)." IETF Internet-Draft.</li>
+    <li>NIST. (2026). "NIST Launches AI Agent Standards Initiative."</li>
+    <li>EXIT Protocol Specification v1.0-draft. (2026). Apache 2.0.</li>
+  </ul>
+
+  <p class="disclaimer">This response is submitted by the Cellar Door project contributors. It does not constitute legal advice and is intended as a technical and policy contribution to the NIST AI Agent Standards Initiative.</p>
+
+</main>
+
+<footer>
+  <div>Cellar Door Project &bull; EXIT Protocol &bull; Apache 2.0</div>
+  <div class="footer-links">
+    <a href="../pragmatic/index.html">Pragmatic Pitch</a>
+    <span class="footer-sep">|</span>
+    <a href="../idealist/index.html">Idealist Pitch</a>
+  </div>
+</footer>
+
+</body>
+</html>
