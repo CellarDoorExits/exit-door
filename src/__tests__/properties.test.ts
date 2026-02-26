@@ -301,7 +301,7 @@ describe("Property-Based Tests", () => {
   });
 
   it("markers with missing required fields always fail validation", () => {
-    const requiredFields = ["@context", "id", "subject", "origin", "timestamp", "exitType", "status", "proof"];
+    const requiredFields = ["@context", "specVersion", "id", "subject", "origin", "timestamp", "exitType", "status", "proof"];
 
     fc.assert(
       fc.property(

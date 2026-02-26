@@ -10,7 +10,7 @@
  * const ctx = { "@context": EXIT_CONTEXT_V1_URL };
  * ```
  */
-export const EXIT_CONTEXT_V1_URL = "https://cellar-door.org/exit/v1";
+export const EXIT_CONTEXT_V1_URL = "https://cellar-door.dev/exit/v1";
 
 /**
  * The full EXIT JSON-LD context object defining all terms, namespaces,
@@ -24,7 +24,7 @@ export const EXIT_CONTEXT_V1_URL = "https://cellar-door.org/exit/v1";
 export const EXIT_CONTEXT = {
   "@context": {
     // Base vocabularies
-    exit: "https://cellar-door.org/exit/v1#",
+    exit: "https://cellar-door.dev/exit/v1#",
     xsd: "http://www.w3.org/2001/XMLSchema#",
     dc: "http://purl.org/dc/terms/",
 

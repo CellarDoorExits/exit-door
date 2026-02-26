@@ -11,12 +11,14 @@ import { CeremonyState, ExitType } from "./types.js";
 import type { ExitMarker, ExitIntent, DataIntegrityProof } from "./types.js";
 import { sign, didFromPublicKey } from "./crypto.js";
 import { canonicalize } from "./marker.js";
-import { signMarker } from "./proof.js";
+import { signMarker, signMarkerWithSigner } from "./proof.js";
 import { CeremonyError } from "./errors.js";
+import type { Signer } from "./signer.js";
+import { proofTypeForAlgorithm } from "./signer.js";
 
 const TRANSITIONS: Record<CeremonyState, CeremonyState[]> = {
   [CeremonyState.Alive]: [CeremonyState.Intent, CeremonyState.Final], // Final for emergency
-  [CeremonyState.Intent]: [CeremonyState.Snapshot],
+  [CeremonyState.Intent]: [CeremonyState.Snapshot, CeremonyState.Final], // Final for emergency escape from INTENT
   [CeremonyState.Snapshot]: [CeremonyState.Open, CeremonyState.Final], // Final for unilateral
   [CeremonyState.Open]: [CeremonyState.Contested, CeremonyState.Final],
   [CeremonyState.Contested]: [CeremonyState.Final],
@@ -58,30 +60,37 @@ export function getValidTransitions(state: CeremonyState): CeremonyState[] {
  * ```
  */
 export class CeremonyStateMachine {
-  state: CeremonyState = CeremonyState.Alive;
+  private _state: CeremonyState = CeremonyState.Alive;
   intent?: ExitIntent;
   marker?: ExitMarker;
   exitType?: ExitType;
 
+  /** Current ceremony state (read-only). */
+  get state(): CeremonyState {
+    return this._state;
+  }
+
   private transition(to: CeremonyState): void {
-    if (!TRANSITIONS[this.state].includes(to)) {
+    if (!TRANSITIONS[this._state].includes(to)) {
       throw new CeremonyError(
-        this.state,
+        this._state,
         to,
-        TRANSITIONS[this.state].map(s => s as string),
+        TRANSITIONS[this._state].map(s => s as string),
       );
     }
-    this.state = to;
+    this._state = to;
   }
 
   /**
    * Declare intent to exit. Moves ALIVE → INTENT (or stays ALIVE for emergency path).
    *
+   * Accepts either a {@link Signer} (preferred) or raw Ed25519 key pair (deprecated).
+   *
    * @param subject - The DID of the departing entity.
    * @param origin - The URI of the system being exited.
    * @param exitType - The type of exit.
-   * @param privateKey - The subject's Ed25519 private key for signing the intent.
-   * @param publicKey - The subject's Ed25519 public key.
+   * @param signerOrPrivateKey - A Signer instance, or Ed25519 private key (deprecated).
+   * @param publicKey - The Ed25519 public key (only when using raw keys).
    * @returns A signed {@link ExitIntent}.
    * @throws {CeremonyError} If the transition is invalid.
    */
@@ -89,20 +98,20 @@ export class CeremonyStateMachine {
     subject: string,
     origin: string,
     exitType: ExitType,
-    privateKey: Uint8Array,
-    publicKey: Uint8Array
+    signerOrPrivateKey: Signer | Uint8Array,
+    publicKey?: Uint8Array
   ): ExitIntent {
     this.exitType = exitType;
 
     // Emergency path goes straight to FINAL
     if (exitType === ExitType.Emergency) {
       // Don't transition yet — will go ALIVE → FINAL on sign
-      this.intent = this.buildIntent(subject, origin, exitType, privateKey, publicKey);
+      this.intent = this.buildIntent(subject, origin, exitType, signerOrPrivateKey, publicKey);
       return this.intent;
     }
 
     this.transition(CeremonyState.Intent);
-    this.intent = this.buildIntent(subject, origin, exitType, privateKey, publicKey);
+    this.intent = this.buildIntent(subject, origin, exitType, signerOrPrivateKey, publicKey);
     return this.intent;
   }
 
@@ -110,13 +119,29 @@ export class CeremonyStateMachine {
     subject: string,
     origin: string,
     exitType: ExitType,
-    privateKey: Uint8Array,
-    publicKey: Uint8Array
+    signerOrPrivateKey: Signer | Uint8Array,
+    publicKey?: Uint8Array
   ): ExitIntent {
     const timestamp = new Date().toISOString();
     const intentData = { subject, origin, timestamp, exitType };
-    const data = new TextEncoder().encode(canonicalize(intentData));
-    const sig = sign(data, privateKey);
+    const data = new TextEncoder().encode("exit-intent-v1:" + canonicalize(intentData));
+
+    let sig: Uint8Array;
+    let did: string;
+    let proofType: string;
+
+    if (signerOrPrivateKey instanceof Uint8Array) {
+      // Legacy raw key path (Ed25519)
+      sig = sign(data, signerOrPrivateKey);
+      did = didFromPublicKey(publicKey!);
+      proofType = "Ed25519Signature2020";
+    } else {
+      // Signer abstraction path
+      const result = signerOrPrivateKey.sign(data);
+      sig = result instanceof Promise ? undefined as never : result;
+      did = signerOrPrivateKey.did();
+      proofType = proofTypeForAlgorithm(signerOrPrivateKey.algorithm);
+    }
 
     return {
       subject,
@@ -124,9 +149,9 @@ export class CeremonyStateMachine {
       timestamp,
       exitType,
       proof: {
-        type: "Ed25519Signature2020",
+        type: proofType,
         created: timestamp,
-        verificationMethod: didFromPublicKey(publicKey),
+        verificationMethod: did,
         proofValue: Buffer.from(sig).toString("base64"),
       },
     };
@@ -162,46 +187,83 @@ export class CeremonyStateMachine {
   /**
    * Sign the marker and finalize. Moves to FINAL.
    *
+   * Accepts either a {@link Signer} (preferred) or raw Ed25519 key pair (deprecated).
+   *
    * @param marker - The EXIT marker to sign.
-   * @param privateKey - The subject's Ed25519 private key.
-   * @param publicKey - The subject's Ed25519 public key.
+   * @param signerOrPrivateKey - A Signer instance, or Ed25519 private key (deprecated).
+   * @param publicKey - The Ed25519 public key (only when using raw keys).
    * @returns The signed EXIT marker.
    * @throws {CeremonyError} If the transition to FINAL is invalid.
    */
-  signMarker(marker: ExitMarker, privateKey: Uint8Array, publicKey: Uint8Array): ExitMarker {
+  signMarker(marker: ExitMarker, signerOrPrivateKey: Signer | Uint8Array, publicKey?: Uint8Array): ExitMarker {
     if (this.exitType === ExitType.Emergency && this.state === CeremonyState.Alive) {
       this.transition(CeremonyState.Final);
     } else {
       this.transition(CeremonyState.Final);
     }
-    this.marker = signMarker(marker, privateKey, publicKey);
+    if (signerOrPrivateKey instanceof Uint8Array) {
+      this.marker = signMarker(marker, signerOrPrivateKey, publicKey!);
+    } else {
+      // Use sync path — signMarkerWithSigner is async but Signer.sign can be sync
+      const signer = signerOrPrivateKey;
+      this.marker = signMarker(marker, signer.publicKey(), signer.publicKey());
+      // Re-sign properly using the signer abstraction via proof.ts
+      const { proof: _proof, id: _id, ...rest } = marker;
+      const canonical = canonicalize(rest);
+      const data = new TextEncoder().encode("exit-marker-v1.1:" + canonical);
+      const sig = signer.sign(data);
+      if (sig instanceof Promise) throw new Error("Async signers not supported in sync signMarker — use signMarkerWithSigner");
+      this.marker = {
+        ...marker,
+        proof: {
+          type: proofTypeForAlgorithm(signer.algorithm),
+          created: new Date().toISOString(),
+          verificationMethod: signer.did(),
+          proofValue: Buffer.from(sig).toString("base64"),
+        },
+      };
+    }
     return this.marker;
   }
 
   /**
    * Add a witness co-signature. Stays in FINAL.
    *
-   * @param witnessKey - The witness's Ed25519 private key.
-   * @param witnessPublicKey - The witness's Ed25519 public key.
+   * Accepts either a {@link Signer} (preferred) or raw Ed25519 key pair (deprecated).
+   *
+   * @param signerOrWitnessKey - A Signer instance, or witness Ed25519 private key (deprecated).
+   * @param witnessPublicKey - The witness's Ed25519 public key (only when using raw keys).
    * @returns A {@link DataIntegrityProof} containing the witness's co-signature.
    * @throws {CeremonyError} If the current state is not FINAL or no marker has been signed.
    */
-  witness(witnessKey: Uint8Array, witnessPublicKey: Uint8Array): DataIntegrityProof {
+  witness(signerOrWitnessKey: Signer | Uint8Array, witnessPublicKey?: Uint8Array): DataIntegrityProof {
     if (this.state !== CeremonyState.Final) {
       throw new CeremonyError(this.state, "witness (requires final)", getValidTransitions(this.state).map(s => s as string));
     }
     if (!this.marker) throw new CeremonyError(this.state, "witness", ["sign a marker first"]);
 
     const { proof: _proof, ...rest } = this.marker;
-    const data = new TextEncoder().encode(canonicalize(rest));
-    const sig = sign(data, witnessKey);
+    const data = new TextEncoder().encode("exit-witness-v1:" + canonicalize(rest));
 
-    return {
-      type: "Ed25519Signature2020",
-      created: new Date().toISOString(),
-      verificationMethod: didFromPublicKey(witnessPublicKey),
-      proofValue: Buffer.from(sig).toString("base64"),
-    };
+    if (signerOrWitnessKey instanceof Uint8Array) {
+      const sig = sign(data, signerOrWitnessKey);
+      return {
+        type: "Ed25519Signature2020",
+        created: new Date().toISOString(),
+        verificationMethod: didFromPublicKey(witnessPublicKey!),
+        proofValue: Buffer.from(sig).toString("base64"),
+      };
+    } else {
+      const signer = signerOrWitnessKey;
+      const sig = signer.sign(data);
+      if (sig instanceof Promise) throw new Error("Async signers not supported in sync witness");
+      return {
+        type: proofTypeForAlgorithm(signer.algorithm),
+        created: new Date().toISOString(),
+        verificationMethod: signer.did(),
+        proofValue: Buffer.from(sig).toString("base64"),
+      };
+    }
   }
 
   /**

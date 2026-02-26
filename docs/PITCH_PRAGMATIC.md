@@ -26,7 +26,7 @@ There are no answers to these questions. There is no documentation format. There
 
 EXIT is a portable, cryptographically signed departure record. When an AI agent leaves a platform — for any reason — EXIT produces a tamper-evident receipt: who left, from where, when, why, and in what standing.
 
-- **~335 bytes (unsigned), ~596 bytes (signed).** Smaller than a tweet.
+- **~335 bytes (unsigned), ~660 bytes (signed).** Smaller than a tweet.
 - **Offline-verifiable.** No phone-home, no central authority, no API dependency.
 - **Cryptographically signed.** Ed25519. The departure happened. The signature proves it.
 - **Self-contained.** A JSON document. That's it.

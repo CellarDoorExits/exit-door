@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   generateKeyPair,
+  didFromPublicKey,
   createMarker,
   computeId,
+  canonicalize,
   signMarker,
   verifyMarker,
   validateMarker,
@@ -11,6 +13,7 @@ import {
   ExitType,
   ExitStatus,
   EXIT_CONTEXT_V1,
+  EXIT_SPEC_VERSION,
   type ModuleA,
 } from "../index.js";
 
@@ -18,7 +21,7 @@ describe("ExitMarker", () => {
   it("creates a voluntary exit marker, signs it, and verifies it", () => {
     const { publicKey, privateKey } = generateKeyPair();
     const marker = createMarker({
-      subject: "did:key:zTestSubject",
+      subject: didFromPublicKey(publicKey),
       origin: "https://example.com",
       exitType: ExitType.Voluntary,
     });
@@ -39,7 +42,7 @@ describe("ExitMarker", () => {
   it("creates an emergency exit marker with justification", () => {
     const { publicKey, privateKey } = generateKeyPair();
     const marker = createMarker({
-      subject: "did:key:zEmergency",
+      subject: didFromPublicKey(publicKey),
       origin: "https://failing-system.org",
       exitType: ExitType.Emergency,
       emergencyJustification: "Platform unresponsive for 72+ hours",
@@ -58,7 +61,7 @@ describe("ExitMarker", () => {
   it("detects tampering with a signed marker", () => {
     const { publicKey, privateKey } = generateKeyPair();
     const marker = createMarker({
-      subject: "did:key:zTamperTest",
+      subject: didFromPublicKey(publicKey),
       origin: "https://example.com",
       exitType: ExitType.Voluntary,
     });
@@ -74,6 +77,7 @@ describe("ExitMarker", () => {
   it("validates schema — missing required field produces error", () => {
     const incomplete = {
       "@context": EXIT_CONTEXT_V1,
+      specVersion: EXIT_SPEC_VERSION,
       id: "test",
       subject: "did:key:z123",
       // missing origin, timestamp, exitType, status, proof
@@ -108,14 +112,15 @@ describe("CeremonyStateMachine", () => {
 
     expect(sm.state).toBe("alive");
 
-    sm.declareIntent("did:key:zSubject", "https://origin.com", ExitType.Voluntary, privateKey, publicKey);
+    const did = didFromPublicKey(publicKey);
+    sm.declareIntent(did, "https://origin.com", ExitType.Voluntary, privateKey, publicKey);
     expect(sm.state).toBe("intent");
 
     sm.snapshot();
     expect(sm.state).toBe("snapshot");
 
     const marker = createMarker({
-      subject: "did:key:zSubject",
+      subject: did,
       origin: "https://origin.com",
       exitType: ExitType.Voluntary,
     });
@@ -137,12 +142,13 @@ describe("CeremonyStateMachine", () => {
     const { publicKey, privateKey } = generateKeyPair();
     const sm = new CeremonyStateMachine();
 
-    sm.declareIntent("did:key:zEmergency", "https://dying.org", ExitType.Emergency, privateKey, publicKey);
+    const did = didFromPublicKey(publicKey);
+    sm.declareIntent(did, "https://dying.org", ExitType.Emergency, privateKey, publicKey);
     // Emergency stays in ALIVE, goes to FINAL on sign
     expect(sm.state).toBe("alive");
 
     const marker = createMarker({
-      subject: "did:key:zEmergency",
+      subject: did,
       origin: "https://dying.org",
       exitType: ExitType.Emergency,
       emergencyJustification: "Platform is dying",
@@ -165,6 +171,7 @@ describe("Compliance Validation", () => {
   it("requires emergencyJustification for emergency exits", () => {
     const marker = {
       "@context": EXIT_CONTEXT_V1,
+      specVersion: EXIT_SPEC_VERSION,
       id: "urn:exit:test",
       subject: "did:key:z123",
       origin: "https://example.com",
@@ -188,6 +195,7 @@ describe("Compliance Validation", () => {
   it("passes validation when emergency exit has justification", () => {
     const marker = {
       "@context": EXIT_CONTEXT_V1,
+      specVersion: EXIT_SPEC_VERSION,
       id: "urn:exit:test",
       subject: "did:key:z123",
       origin: "https://example.com",
@@ -211,6 +219,7 @@ describe("Compliance Validation", () => {
   it("validates legalHold structure when present", () => {
     const marker = {
       "@context": EXIT_CONTEXT_V1,
+      specVersion: EXIT_SPEC_VERSION,
       id: "urn:exit:test",
       subject: "did:key:z123",
       origin: "https://example.com",
@@ -240,6 +249,7 @@ describe("Compliance Validation", () => {
   it("rejects invalid legalHold structure", () => {
     const marker = {
       "@context": EXIT_CONTEXT_V1,
+      specVersion: EXIT_SPEC_VERSION,
       id: "urn:exit:test",
       subject: "did:key:z123",
       origin: "https://example.com",
@@ -271,6 +281,7 @@ describe("Compliance Validation", () => {
   it("accepts keyCompromise exit type", () => {
     const marker = {
       "@context": EXIT_CONTEXT_V1,
+      specVersion: EXIT_SPEC_VERSION,
       id: "urn:exit:test",
       subject: "did:key:z123",
       origin: "https://example.com",
@@ -321,5 +332,66 @@ describe("Modules", () => {
     expect(withLineage.lineage!.lineageChain).toHaveLength(3);
     // Original unchanged
     expect(marker.lineage).toBeUndefined();
+  });
+});
+
+describe("New ExitType values (v1.1)", () => {
+  const newTypes = [
+    { type: ExitType.PlatformShutdown, label: "PlatformShutdown" },
+    { type: ExitType.Directed, label: "Directed" },
+    { type: ExitType.Constructive, label: "Constructive" },
+    { type: ExitType.Acquisition, label: "Acquisition" },
+  ];
+
+  for (const { type, label } of newTypes) {
+    it(`creates, validates, signs, and verifies a ${label} marker`, () => {
+      const { publicKey, privateKey } = generateKeyPair();
+      const marker = createMarker({
+        subject: didFromPublicKey(publicKey),
+        origin: "https://example.com",
+        exitType: type,
+      });
+
+      expect(marker.exitType).toBe(type);
+
+      // Validate
+      const validation = validateMarker(marker);
+      expect(validation.valid).toBe(true);
+      expect(validation.errors).toHaveLength(0);
+
+      // Sign and verify
+      const signed = signMarker(marker, privateKey, publicKey);
+      expect(signed.proof.proofValue).toBeTruthy();
+
+      const result = verifyMarker(signed);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+  }
+
+  describe("NFC normalization", () => {
+    it("produces identical canonical output for NFC and NFD forms", () => {
+      // é as single codepoint (NFC) vs e + combining acute (NFD)
+      const nfc = "caf\u00E9";
+      const nfd = "cafe\u0301";
+      expect(nfc).not.toBe(nfd); // different byte representations
+      expect(nfc.normalize("NFC")).toBe(nfd.normalize("NFC")); // same after NFC
+
+      const marker1 = createMarker({
+        subject: "did:key:z6MkTest",
+        origin: `https://${nfc}.example.com`,
+        exitType: ExitType.Voluntary,
+      });
+      const marker2 = createMarker({
+        subject: "did:key:z6MkTest",
+        origin: `https://${nfd}.example.com`,
+        exitType: ExitType.Voluntary,
+        timestamp: marker1.timestamp,
+      });
+
+      const { proof: _p1, id: _id1, ...rest1 } = marker1;
+      const { proof: _p2, id: _id2, ...rest2 } = marker2;
+      expect(canonicalize(rest1)).toBe(canonicalize(rest2));
+    });
   });
 });

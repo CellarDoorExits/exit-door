@@ -18,7 +18,7 @@
 
 AI agents communicate across platforms (A2A), access tools (MCP), and execute payments (AP2). No protocol standardizes what happens when an agent transitions between platforms. No chain of custody exists. No verifiable departure history. No portable liability documentation.
 
-**The EXIT Protocol** is a minimal, open, cryptographically signed format for portable agent departure records. Nine fields, ~335 bytes unsigned, ~596 bytes signed. Apache 2.0 licensed.
+**The EXIT Protocol** is a minimal, open, cryptographically signed format for portable agent departure records. Nine fields, ~335 bytes unsigned, ~660 bytes signed. Apache 2.0 licensed.
 
 **We recommend NIST include agent lifecycle transition records as a requirement within the AI Risk Management Framework (AI RMF) and as a component of the NCCoE Software and AI Agent Identity and Authorization project.**
 
@@ -104,7 +104,7 @@ A detailed technical treatment is available at [cellar-door-exit.netlify.app](ht
 | `selfAttested` | Boolean: is status self-reported? | Disclosure transparency |
 | `proof` | Ed25519 cryptographic signature | Verification |
 
-Nine fields. ~335 bytes unsigned, ~596 bytes signed.
+Nine fields. ~335 bytes unsigned, ~660 bytes signed.
 
 ### 2.5 Extension Modules
 

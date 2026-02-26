@@ -16,7 +16,53 @@ import type {
   CompromiseLink,
   DataIntegrityProof,
 } from "./types.js";
-import { EXIT_CONTEXT_V1 } from "./types.js";
+import { EXIT_CONTEXT_V1, EXIT_SPEC_VERSION } from "./types.js";
+
+// ─── Platform Compromise Declaration ────────────────────────────────────────
+
+/** Declaration that a platform's signing keys were compromised during a window. */
+export interface PlatformCompromiseDeclaration {
+  /** DID of the platform whose keys were compromised. */
+  platformDid: string;
+  /** Start of the compromise window (ISO 8601 UTC). */
+  compromisedAfter: string;
+  /** End of the compromise window (ISO 8601 UTC). If absent, compromise is ongoing. */
+  compromisedBefore?: string;
+  /** Signed declaration by the platform. */
+  declaration: string;
+}
+
+/**
+ * Flag markers that were co-signed by a platform during a compromised window.
+ *
+ * @param markers - Array of EXIT markers to check.
+ * @param declaration - The platform compromise declaration.
+ * @returns Array of marker IDs that were co-signed during the compromised window.
+ */
+export function flagCompromisedPlatformMarkers(
+  markers: ExitMarker[],
+  declaration: PlatformCompromiseDeclaration
+): string[] {
+  const after = new Date(declaration.compromisedAfter).getTime();
+  const before = declaration.compromisedBefore
+    ? new Date(declaration.compromisedBefore).getTime()
+    : Infinity;
+
+  return markers
+    .filter((m) => {
+      // Check if the marker's proof was created during the compromise window
+      const proofTime = new Date(m.proof.created).getTime();
+      if (proofTime >= after && proofTime <= before) {
+        // Check if the platform co-signed (appears in counterparty acks or verification method)
+        if (m.proof.verificationMethod === declaration.platformDid) return true;
+        if (m.dispute?.counterpartyAcks?.some(
+          (ack) => ack.verificationMethod === declaration.platformDid
+        )) return true;
+      }
+      return false;
+    })
+    .map((m) => m.id);
+}
 
 /**
  * Create an EXIT marker declaring key compromise.
@@ -40,6 +86,7 @@ export function createCompromiseMarker(
   
   const marker = {
     "@context": EXIT_CONTEXT_V1,
+    specVersion: EXIT_SPEC_VERSION,
     id: "",
     subject: compromisedDid,
     origin: "did:keri:key-event-log",
@@ -63,8 +110,10 @@ export function createCompromiseMarker(
   marker.id = `urn:exit:${computeId(rest as ExitMarker)}`;
 
   // Sign with the new key (the current key after rotation)
+  // Use domain separation prefix consistent with signMarker/verifyMarker (CRYPTO-001 fix)
+  const DOMAIN_PREFIX = "exit-marker-v1.1:";
   const canonical = canonicalize({ ...marker, proof: undefined });
-  const data = new TextEncoder().encode(canonical);
+  const data = new TextEncoder().encode(DOMAIN_PREFIX + canonical);
   const signature = sign(data, signingKey);
   const proofValue = Buffer.from(signature).toString("base64");
 

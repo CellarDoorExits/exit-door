@@ -1,6 +1,6 @@
 # Cellar-Door / EXIT — Macro Project Plan
 
-> ⚠️ **HISTORICAL**: This document predates the implementation phase. As of Feb 2026, cellar-door-exit has 205 tests, 49 source modules, and a working CLI (`exit-door`). See projects/cellar-door-exit/ for current state.
+> ⚠️ **HISTORICAL**: This document predates the implementation phase. As of Feb 2026, cellar-door-exit has 291 tests, 30 source modules, and a working CLI (`exit-door`). See projects/cellar-door-exit/ for current state.
 
 **Created**: 2026-02-19 | **Status**: Launch planning — ready to build
 
@@ -43,7 +43,7 @@
 
 ```
 EXIT Marker (the artifact)
-├── Core: 7 fields, ~335–596 bytes, always valid
+├── Core: 7 fields, ~335–660 bytes, always valid
 ├── + Module A (Lineage): successor, predecessor, continuity proof
 ├── + Module B (State): hash refs to external state
 ├── + Module C (Dispute): challenge window, evidence refs

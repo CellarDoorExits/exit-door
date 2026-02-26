@@ -433,7 +433,7 @@ This is the document we hand to actual lawyers to show we've thought through the
 - **Representative requirement:** If not established in EU but processing EU personal data, must appoint an EU representative (Art. 27)
 
 **How our current design holds up:**
-- **Strengths:** Data minimization (core marker is ~335–596 bytes). Non-custodial design reduces controller/processor obligations. LEGAL.md §7 addresses GDPR directly. Module system allows implementers to include only necessary data. `selfAttested: true` flag supports data accuracy principle.
+- **Strengths:** Data minimization (core marker is ~335–660 bytes). Non-custodial design reduces controller/processor obligations. LEGAL.md §7 addresses GDPR directly. Module system allows implementers to include only necessary data. `selfAttested: true` flag supports data accuracy principle.
 - **Weaknesses:** "Functional erasure via encryption" is legally untested and may not survive CJEU scrutiny. No DPIA has been conducted. No privacy notice template is provided. No data processing agreement template is provided. Module F on-chain anchoring is explicitly incompatible with GDPR. ZK selective disclosure is roadmapped but not implemented — and it's needed NOW, not later.
 - **The `legalHold` field creates an Art. 10 problem:** Data relating to criminal convictions/offences requires specific legal authority to process. A `holdType: "criminal_investigation"` is exactly this.
 

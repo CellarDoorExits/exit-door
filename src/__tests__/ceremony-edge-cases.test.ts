@@ -424,7 +424,7 @@ describe("Ceremony State Machine — Edge Cases", () => {
   describe("getValidTransitions", () => {
     it("returns correct transitions for every state", () => {
       expect(getValidTransitions(CeremonyState.Alive)).toEqual([CeremonyState.Intent, CeremonyState.Final]);
-      expect(getValidTransitions(CeremonyState.Intent)).toEqual([CeremonyState.Snapshot]);
+      expect(getValidTransitions(CeremonyState.Intent)).toEqual([CeremonyState.Snapshot, CeremonyState.Final]);
       expect(getValidTransitions(CeremonyState.Snapshot)).toEqual([CeremonyState.Open, CeremonyState.Final]);
       expect(getValidTransitions(CeremonyState.Open)).toEqual([CeremonyState.Contested, CeremonyState.Final]);
       expect(getValidTransitions(CeremonyState.Contested)).toEqual([CeremonyState.Final]);

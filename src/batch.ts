@@ -6,7 +6,9 @@
 
 import { sha256 } from "@noble/hashes/sha256";
 import { computeAnchorHash } from "./anchor.js";
-import type { ExitMarker } from "./types.js";
+import { canonicalize } from "./marker.js";
+import { sign, didFromPublicKey } from "./crypto.js";
+import type { ExitMarker, DataIntegrityProof } from "./types.js";
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -170,5 +172,71 @@ export function createBatchExit(markers: ExitMarker[]): BatchExit {
     count: markers.length,
     timestamp: new Date().toISOString(),
     leaves,
+  };
+}
+
+// ─── Batch Shutdown Ceremony ─────────────────────────────────────────────────
+
+/** Wraps multiple departures with a platform attestation for platform shutdowns. */
+export interface BatchShutdownCeremony {
+  /** DID of the platform initiating shutdown. */
+  platformDid: string;
+  /** Merkle root of all departure markers. */
+  merkleRoot: string;
+  /** Number of departures in the batch. */
+  count: number;
+  /** Individual marker IDs included in this batch. */
+  markerIds: string[];
+  /** When the shutdown batch was created (ISO 8601 UTC). */
+  timestamp: string;
+  /** Platform's attestation signature over the batch. */
+  platformAttestation: DataIntegrityProof;
+}
+
+/**
+ * Create a batch shutdown ceremony for platform shutdowns.
+ *
+ * @param platformDid - DID of the platform initiating shutdown.
+ * @param markers - Array of EXIT markers for all departing agents.
+ * @param privateKey - Platform's private key for signing the attestation.
+ * @returns A {@link BatchShutdownCeremony} with platform attestation.
+ * @throws {Error} If the marker array is empty.
+ */
+export function createShutdownBatch(
+  platformDid: string,
+  markers: ExitMarker[],
+  privateKey: Uint8Array
+): BatchShutdownCeremony {
+  if (markers.length === 0) throw new Error("Cannot create shutdown batch from empty marker set");
+
+  const leaves = markers.map((m) => computeAnchorHash(m));
+  const merkleRoot = computeMerkleRoot(leaves);
+  const now = new Date().toISOString();
+  const markerIds = markers.map((m) => m.id);
+
+  const attestationPayload = canonicalize({
+    platformDid,
+    merkleRoot,
+    count: markers.length,
+    markerIds,
+    timestamp: now,
+  });
+
+  const data = new TextEncoder().encode(attestationPayload);
+  const signature = sign(data, privateKey);
+  const proofValue = Buffer.from(signature).toString("base64");
+
+  return {
+    platformDid,
+    merkleRoot,
+    count: markers.length,
+    markerIds,
+    timestamp: now,
+    platformAttestation: {
+      type: "Ed25519Signature2020",
+      created: now,
+      verificationMethod: platformDid,
+      proofValue,
+    },
   };
 }

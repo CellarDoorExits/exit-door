@@ -7,7 +7,7 @@
 
 ## 0. Complete File Manifest
 
-### Repository: `cellar-door-exit` (62 files)
+### Repository: `cellar-door-exit` (30 source files)
 
 | File | Hash | Description |
 |------|------|-------------|
@@ -97,7 +97,7 @@ EXIT is a **verifiable transition marker** — a cryptographically signed, porta
 
 **Vision layer:** Part of the HOLOS ecosystem. Vision (Peace Through Commerce) → Primitive (Cellar Door/EXIT) → Infrastructure (Gas Town + Beads). EXIT is deliberately dependency-minimal — needs only Ed25519 crypto and a DID method.
 
-**Current state:** Architecture complete, spec v1 drafted, reference implementation built (TypeScript, 62 files, 205 tests passing across 10 test suites), zero production deployment. No revenue, no users beyond internal testing.
+**Current state:** Architecture complete, spec v1 drafted, reference implementation built (TypeScript, 30 source files, 291 tests passing across 10 test suites), zero production deployment. No revenue, no users beyond internal testing.
 
 > See: `memory/cellar-door-project-plan.md`, `memory/cellar-door-gastown-notes.md`
 
@@ -105,7 +105,7 @@ EXIT is a **verifiable transition marker** — a cryptographically signed, porta
 
 ## 2. Architecture
 
-### Core Schema: 7 Mandatory Fields (~335–596 bytes)
+### Core Schema: 7 Mandatory Fields (~335–660 bytes)
 
 | # | Field | Purpose |
 |---|---|---|
@@ -480,7 +480,7 @@ The following ethical guardrails are now **code, not just recommendations** (`sr
 - Agent lineage spec (successor appointment, continuity proofs)
 - 3 Mayor decisions ratified (all option C: dual format, layered verification, multi-source status)
 - 3 research spikes complete (DID methods, VC envelope fit, Moloch ragequit)
-- Reference implementation in TypeScript (62 files, 205 tests passing)
+- Reference implementation in TypeScript (30 source files, 291 tests passing)
 - 13 architectural decisions ratified
 - Compliance documents (LEGAL.md 13 sections, SECURITY.md) — drafted
 - EXIT spec v1 — drafted
@@ -615,7 +615,7 @@ As of February 2026, **EXIT has no direct competitors**. Nobody is building agen
 ## 16. Strategic Roadmap
 
 ### Phase 1 — "The Primitive" (NOW → Q1 2026) ← **SUBSTANTIALLY COMPLETE**
-**Done:** Core marker + signed marker + Module A-F + CLI + 205 tests + KERI stubs + ethics guardrails + trust mechanisms + framework interop + pitch materials + NIST drafts + academic paper + competitive research
+**Done:** Core marker + signed marker + Module A-F + CLI + 291 tests + KERI stubs + ethics guardrails + trust mechanisms + framework interop + pitch materials + NIST drafts + academic paper + competitive research
 **Remaining:** Form Delaware LLC ($500), Tech E&O insurance ($3-8K), trademark ($2,500), domain acquisition
 **Target:** Developer community, agent framework builders, NIST RFI submission
 **Revenue:** $0 (open-source primitive)
@@ -647,4 +647,4 @@ Wallet/asset transfer, custodial agent hosting, KYC service, reputation aggregat
 ---
 
 *This document is the master index. For depth on any topic, follow the source citations. Update as decisions are made and work progresses.*
-*Last verified: 2026-02-20 — 62 repo files, 11 analysis docs, 205 tests passing, 5 sprints complete.*
+*Last verified: 2026-02-20 — 30 source files, 11 analysis docs, 291 tests passing, 5 sprints complete.*

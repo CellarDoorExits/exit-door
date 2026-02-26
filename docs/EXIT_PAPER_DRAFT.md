@@ -1,6 +1,6 @@
 # EXIT: A Protocol for Verifiable Agent Departure Ceremonies
 
-**Authors:** [Names TBD]
+**Authors:** Warren Koch
 
 **Affiliation:** Cellar Door Project
 
@@ -503,4 +503,4 @@ Wu, Q., Bansal, G., Zhang, J., Wu, Y., Li, B., Zhu, E., Jiang, L., Zhang, X., Zh
 
 ---
 
-*Correspondence: [email TBD]. Code and specification: [repository URL TBD]. License: Apache 2.0.*
+*Correspondence: hawthornhollows@gmail.com. Code and specification: https://github.com/CellarDoorExits/exit-door. License: Apache 2.0.*

@@ -207,6 +207,6 @@ describe("Ceremony transition errors", () => {
   it("getValidTransitions returns correct transitions", () => {
     expect(getValidTransitions(CeremonyState.Alive)).toEqual([CeremonyState.Intent, CeremonyState.Final]);
     expect(getValidTransitions(CeremonyState.Departed)).toEqual([]);
-    expect(getValidTransitions(CeremonyState.Intent)).toEqual([CeremonyState.Snapshot]);
+    expect(getValidTransitions(CeremonyState.Intent)).toEqual([CeremonyState.Snapshot, CeremonyState.Final]);
   });
 });

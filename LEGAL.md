@@ -257,6 +257,46 @@ Protocol takes no position on legal status of AI agents. Designed to function re
 
 ---
 
+## 15. Safe Harbor Provisions
+
+### 15.1 Good-Faith Attestation Protection
+
+Parties who attest to `originStatus` in Module C in good faith and with reasonable basis for their attestation SHALL NOT be liable for inaccuracies in that attestation, provided:
+
+- The attestation reflects the attester's honest assessment at the time of departure
+- The attester did not knowingly make a false attestation
+- The attester made reasonable efforts to verify the facts underlying their attestation
+
+This safe harbor is modeled on qualified privilege in defamation law and the good-faith reporting protections in employment reference statutes.
+
+### 15.2 Evidence Requirements for Disputed Status
+
+A party seeking to change a marker's status to `disputed` SHOULD provide:
+
+- A specific, articulable basis for the dispute (not merely disagreement)
+- Identification of the disputing party (via DID or equivalent)
+- A timestamp and signature over the dispute claim
+
+These requirements exist to prevent frivolous or retaliatory disputes. They do not prevent any party from filing a dispute — they ensure disputes are attributable and dated.
+
+### 15.3 Protocol Operator Safe Harbor
+
+Operators of systems that faithfully implement the EXIT specification — including registries, verifiers, and relay services — SHALL NOT be held liable for:
+
+- The content of EXIT markers created by users of their systems
+- The accuracy of self-attested or origin-attested status fields
+- Outcomes that result from downstream reliance on EXIT marker data
+- The actions of departing entities after departure
+
+This safe harbor applies only to operators who:
+
+1. Implement the EXIT specification without material modification
+2. Do not selectively suppress, alter, or fabricate EXIT markers
+3. Provide equal access to EXIT marker creation and verification
+4. Comply with applicable law, including court orders and legal process
+
+---
+
 ## Disclaimer
 
 THIS DOCUMENT IS PROVIDED FOR INFORMATIONAL PURPOSES AND DOES NOT CONSTITUTE LEGAL ADVICE. Users of the EXIT protocol should consult qualified legal counsel regarding their specific use case, jurisdiction, and regulatory obligations. The protocol authors make no representations regarding the legal compliance of any particular use of this protocol.

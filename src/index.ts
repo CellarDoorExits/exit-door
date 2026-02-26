@@ -28,6 +28,7 @@ export {
   type ModuleF,
 
   // Module subtypes
+  type CompletenessAttestation,
   type ContinuityProof,
   type Dispute,
   type ChallengeWindow,
@@ -46,6 +47,12 @@ export {
   type KeyEvent,
   type CompromiseLink,
 
+  // Trust enhancer types (conduit-only)
+  type TrustEnhancers,
+  type TimestampAttachment,
+  type WitnessAttachment,
+  type IdentityClaimAttachment,
+
   // Ethics & guardrail types
   CoercionLabel,
   type RightOfReply,
@@ -57,6 +64,7 @@ export {
 
   // Constants
   EXIT_CONTEXT_V1,
+  EXIT_SPEC_VERSION,
 } from "./types.js";
 
 export {
@@ -65,7 +73,27 @@ export {
   verify,
   didFromPublicKey,
   publicKeyFromDid,
+  generateP256KeyPair,
+  signP256,
+  verifyP256,
+  didFromP256PublicKey,
+  publicKeyFromP256Did,
+  algorithmFromDid,
 } from "./crypto.js";
+
+// Signer abstraction
+export {
+  type SignatureAlgorithm,
+  type Signer,
+  type SignerOptions,
+  Ed25519Signer,
+  P256Signer,
+  createSigner,
+  createVerifier,
+  generateKeyPairForAlgorithm,
+  proofTypeForAlgorithm,
+  algorithmFromProofType,
+} from "./signer.js";
 
 export {
   createMarker,
@@ -74,9 +102,10 @@ export {
   addModule,
 } from "./marker.js";
 
-export { signMarker, verifyMarker } from "./proof.js";
+/** @deprecated Use `signDepartureMarker` from passage API instead */
+export { signMarker, verifyMarker, signMarkerWithSigner, verifyMarkerMultiAlg, verifyTrustEnhancers, type VerificationResult } from "./proof.js";
 
-export { validateMarker } from "./validate.js";
+export { validateMarker, type ValidationResult } from "./validate.js";
 
 export { CeremonyStateMachine, getValidTransitions } from "./ceremony.js";
 
@@ -170,7 +199,9 @@ export {
   verifyBatchMembership,
   computeMerkleRoot,
   computeMerkleProof,
+  createShutdownBatch,
   type BatchExit,
+  type BatchShutdownCeremony,
   type MerkleProof,
 } from "./batch.js";
 
@@ -227,9 +258,112 @@ export {
   type EthicalComplianceResult,
 } from "./guardrails.js";
 
+// Sprint 6: Git Ledger
+export {
+  initLedger,
+  anchorToGit,
+  verifyLedgerEntry,
+  listLedgerEntries,
+  type GitLedgerConfig,
+  type LedgerEntry,
+} from "./git-ledger.js";
+
+// Sprint 6: RFC 3161 Timestamp Authority
+export {
+  requestTimestamp,
+  anchorWithTSA,
+  verifyTSAReceipt,
+  buildTimestampRequest,
+  extractTimestampFromTSR,
+  checkTSRStatus,
+  type TSAReceipt,
+} from "./tsa.js";
+
+// Full Service
+export {
+  departAndAnchor,
+  departAndVerify,
+  type AnchorConfig,
+  type PublicIdentity,
+  type FullExitResult,
+  type FullExitOpts,
+  type TrustLevel,
+  type VerifyResult,
+} from "./full-service.js";
+
 // Sprint 5: Key Compromise Recovery
 export {
   createCompromiseMarker,
   verifyCompromiseRecovery,
   linkCompromisedMarkers,
+  flagCompromisedPlatformMarkers,
+  type PlatformCompromiseDeclaration,
 } from "./key-compromise.js";
+
+// Dispute Resolution
+export {
+  createDispute,
+  resolveDispute,
+  verifyDisputeResolution,
+  isDisputed,
+  getDisputeStatus,
+  type DisputeRecord,
+  type DisputeResolution,
+  type DisputeState,
+} from "./dispute.js";
+
+// Visual — Door Hash visualization
+export {
+  renderDoorASCII,
+  hashToColors,
+  renderDoorSVG,
+  shortHash,
+} from "./visual.js";
+
+// Passage API (v0.2.0 renamed surface)
+export {
+  createDepartureMarker,
+  signDepartureMarker,
+  signDepartureWithSigner,
+  verifyDeparture,
+  verifyDepartureMultiAlg,
+  quickDeparture,
+  quickPassageVerify,
+  generatePassageIdentity,
+  createPassage,
+  verifyPassage,
+  type DepartureMarker,
+  type PassageProof,
+  type PassageVerificationResult,
+} from "./passage.js";
+
+// Claim Store
+export {
+  MemoryClaimStore,
+  ClaimType,
+  claimFromMarker,
+  claimsFromTrustEnhancers,
+  ingestMarker,
+  type StoredClaim,
+  type ClaimQuery,
+  type ClaimStoreStats,
+  type ClaimStoreBackend,
+} from "./claim-store.js";
+
+// Telemetry (OpenTelemetry integration)
+export {
+  initTelemetry,
+  resetTelemetry,
+  startExitSpan,
+  withSpan,
+  withSpanAsync,
+  instrumentedSignMarker,
+  instrumentedVerifyMarker,
+  instrumentedSignDepartureMarker,
+  instrumentedVerifyDeparture,
+  startCeremonySpan,
+  type Tracer,
+  type Span,
+  type SpanOptions,
+  type TelemetryConfig,
+} from "./telemetry.js";

@@ -57,7 +57,7 @@ Every valid EXIT marker MUST contain the following fields.
 
 | # | Field | Type | Description |
 |---|---|---|---|
-| 1 | `@context` | string | MUST be `"https://cellar-door.org/exit/v1"` |
+| 1 | `@context` | string | MUST be `"https://cellar-door.dev/exit/v1"` |
 | 2 | `id` | string (URI) | Globally unique identifier. SHOULD be content-addressed (`urn:exit:{sha256}`) |
 | 3 | `subject` | string (DID/URI) | Who is exiting. MUST be a valid DID or agent URI |
 | 4 | `origin` | string (URI) | What is being exited. MUST be a URI identifying the origin system |
@@ -257,7 +257,7 @@ ALIVE → FINAL → DEPARTED
 
 A verifier MUST check:
 
-1. `@context` equals `"https://cellar-door.org/exit/v1"`
+1. `@context` equals `"https://cellar-door.dev/exit/v1"`
 2. All 7 mandatory fields are present and non-empty
 3. `selfAttested` field is present (boolean)
 4. `timestamp` is valid ISO 8601 UTC
@@ -357,7 +357,7 @@ This is a design priority tracked separately from the v1.0 specification.
 
 ### 10.1 JSON-LD
 
-EXIT markers use the JSON-LD context at `https://cellar-door.org/exit/v1`. The context file defines term mappings for all core and module fields. Processors MUST resolve the context to interpret field semantics.
+EXIT markers use the JSON-LD context at `https://cellar-door.dev/exit/v1`. The context file defines term mappings for all core and module fields. Processors MUST resolve the context to interpret field semantics.
 
 ### 10.2 Verifiable Credential Wrapper
 
@@ -397,7 +397,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 
 ```json
 {
-  "@context": "https://cellar-door.org/exit/v1",
+  "@context": "https://cellar-door.dev/exit/v1",
   "id": "urn:exit:abc123",
   "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
   "origin": "https://example-platform.com",
@@ -418,7 +418,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 
 ```json
 {
-  "@context": "https://cellar-door.org/exit/v1",
+  "@context": "https://cellar-door.dev/exit/v1",
   "id": "urn:exit:def456",
   "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
   "origin": "https://failing-platform.org",
@@ -440,7 +440,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 
 ```json
 {
-  "@context": "https://cellar-door.org/exit/v1",
+  "@context": "https://cellar-door.dev/exit/v1",
   "id": "urn:exit:ghi789",
   "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
   "origin": "https://regulated-platform.com",
@@ -468,7 +468,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 
 ```json
 {
-  "@context": "https://cellar-door.org/exit/v1",
+  "@context": "https://cellar-door.dev/exit/v1",
   "id": "urn:exit:jkl012",
   "subject": "did:key:z6MknewTrustedKey123",
   "origin": "https://any-context.com",

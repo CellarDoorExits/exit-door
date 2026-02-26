@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   generateKeyPair,
+  didFromPublicKey,
   createMarker,
   signMarker,
   addModule,
@@ -93,7 +94,7 @@ describe("Module attachment to markers", () => {
   it("attaches lineage module and validates marker", () => {
     const { publicKey, privateKey } = generateKeyPair();
     const marker = createMarker({
-      subject: "did:key:zModTest",
+      subject: didFromPublicKey(publicKey),
       origin: "https://example.com",
       exitType: ExitType.Voluntary,
     });

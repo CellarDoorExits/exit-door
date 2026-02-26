@@ -15,6 +15,7 @@ import {
   ExitType,
   ExitStatus,
   EXIT_CONTEXT_V1,
+  EXIT_SPEC_VERSION,
 } from "./types.js";
 import { ValidationError } from "./errors.js";
 
@@ -67,6 +68,7 @@ export function createMarker(opts: CreateMarkerOpts): ExitMarker {
   const timestamp = opts.timestamp ?? new Date().toISOString();
   const marker: ExitMarker = {
     "@context": EXIT_CONTEXT_V1,
+    specVersion: EXIT_SPEC_VERSION,
     id: opts.id ?? "",
     subject: opts.subject,
     origin: opts.origin,
@@ -79,6 +81,13 @@ export function createMarker(opts: CreateMarkerOpts): ExitMarker {
 
   if (opts.emergencyJustification) {
     marker.emergencyJustification = opts.emergencyJustification;
+  }
+
+  // Auto-populate expires if not provided (§8.5 mandatory sunset)
+  if (!marker.expires) {
+    const defaultDays = opts.exitType === ExitType.Voluntary ? 730 : 365;
+    const expiresDate = new Date(new Date(timestamp).getTime() + defaultDays * 86_400_000);
+    marker.expires = expiresDate.toISOString();
   }
 
   // Compute content-addressed ID if not provided
@@ -94,10 +103,15 @@ function defaultStatus(exitType: ExitType): ExitStatus {
     case ExitType.Voluntary:
       return ExitStatus.GoodStanding;
     case ExitType.Forced:
+    case ExitType.Directed:
+    case ExitType.Constructive:
       return ExitStatus.Disputed;
     case ExitType.Emergency:
-      return ExitStatus.Unverified;
     case ExitType.KeyCompromise:
+    case ExitType.PlatformShutdown:
+    case ExitType.Acquisition:
+      return ExitStatus.Unverified;
+    default:
       return ExitStatus.Unverified;
   }
 }
@@ -110,6 +124,7 @@ function defaultStatus(exitType: ExitType): ExitStatus {
  */
 export function canonicalize(obj: unknown): string {
   if (obj === null || obj === undefined) return JSON.stringify(obj);
+  if (typeof obj === "string") return JSON.stringify(obj.normalize("NFC"));
   if (typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) {
     return "[" + obj.map((v) => canonicalize(v)).join(",") + "]";

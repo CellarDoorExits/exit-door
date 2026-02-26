@@ -93,7 +93,7 @@ export function createTenureAttestation(
 ): TenureAttestation {
   const did = didFromPublicKey(publicKey);
   const data = canonicalize({ duration, startDate, attestedBy, attesterDid: did });
-  const sig = sign(new TextEncoder().encode(data), privateKey);
+  const sig = sign(new TextEncoder().encode("tenure-attestation-v1:" + data), privateKey);
 
   return {
     duration,
@@ -120,7 +120,7 @@ export function verifyTenureAttestation(attestation: TenureAttestation): boolean
       attesterDid: attestation.attesterDid,
     });
     const sig = new Uint8Array(Buffer.from(attestation.signature, "base64"));
-    return verify(new TextEncoder().encode(data), sig, publicKey);
+    return verify(new TextEncoder().encode("tenure-attestation-v1:" + data), sig, publicKey);
   } catch {
     return false;
   }
@@ -181,7 +181,7 @@ export function createCommitment(
     revealAfter: revealAfterStr,
     committerDid: did,
   });
-  const sig = sign(new TextEncoder().encode(commitData), privateKey);
+  const sig = sign(new TextEncoder().encode("exit-commitment-v1:" + commitData), privateKey);
 
   return {
     commitmentHash,
@@ -237,7 +237,7 @@ export function verifyCommitment(
     });
     const sig = new Uint8Array(Buffer.from(commitment.proof.proofValue, "base64"));
 
-    if (!verify(new TextEncoder().encode(commitData), sig, publicKey)) {
+    if (!verify(new TextEncoder().encode("exit-commitment-v1:" + commitData), sig, publicKey)) {
       errors.push("Commitment signature verification failed");
     }
   } catch (e) {

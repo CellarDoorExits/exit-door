@@ -5,7 +5,7 @@
 
 ## Test Breakdown
 
-**205 tests across 13 test files — all passing.**
+**291 tests across 18 test files — all passing.**
 
 | Test File | Description |
 |-----------|-------------|

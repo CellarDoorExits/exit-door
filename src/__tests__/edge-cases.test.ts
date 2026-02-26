@@ -50,13 +50,14 @@ describe("Edge Cases", () => {
     })).toThrow("origin");
   });
 
-  // ─── Extremely long reason text ────────────────────────────────────
-  it("handles extremely long reason text", () => {
+  // ─── Extremely long reason text (exceeds 8KB limit) ────────────────
+  it("rejects extremely long reason text exceeding 8KB limit", () => {
     const { marker } = makeSignedMarker();
     const longReason = "x".repeat(100_000);
     const withMeta = addModule(marker, "metadata", { reason: longReason } as ModuleE);
     const result = validateMarker(withMeta);
-    expect(result.valid).toBe(true);
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain("8192");
   });
 
   // ─── Unicode in all string fields ──────────────────────────────────

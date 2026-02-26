@@ -263,7 +263,7 @@ Examples:
   $ exit anchor marker.json                        Compute anchor hash
   $ exit redact marker.json --fields subject       Redact fields from a marker
 
-Documentation: https://cellar-door.org/exit/v1
+Documentation: https://cellar-door.dev/exit/v1
 `);
 
 // ─── exit create ─────────────────────────────────────────────────────────────

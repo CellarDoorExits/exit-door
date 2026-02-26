@@ -4,6 +4,7 @@ import {
   ExitStatus,
   ExitMarker,
   EXIT_CONTEXT_V1,
+  EXIT_SPEC_VERSION,
   CoercionLabel,
 } from "../types.js";
 import {
@@ -26,6 +27,7 @@ import {
 function makeMarker(overrides: Partial<ExitMarker> & { subject?: string; origin?: string } = {}): ExitMarker {
   return {
     "@context": EXIT_CONTEXT_V1,
+    specVersion: EXIT_SPEC_VERSION,
     id: overrides.id || `urn:exit:test-${Math.random().toString(36).slice(2)}`,
     subject: overrides.subject || "did:key:zSubject1",
     origin: overrides.origin || "https://platform.example",

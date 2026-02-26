@@ -1,6 +1,6 @@
 {
   "@context": {
-    "exit": "https://cellar-door.org/exit/v1#",
+    "exit": "https://cellar-door.dev/exit/v1#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "dc": "http://purl.org/dc/terms/",
     "id": "@id",
@@ -38,6 +38,16 @@
     "assetManifest": { "@id": "exit:assetManifest", "@type": "@id", "@container": "@list" },
     "stateHash": { "@id": "exit:stateHash", "@type": "xsd:string" },
     "memoryRef": { "@id": "exit:memoryRef", "@type": "@id" },
-    "configHash": { "@id": "exit:configHash", "@type": "xsd:string" }
+    "configHash": { "@id": "exit:configHash", "@type": "xsd:string" },
+    "specVersion": { "@id": "exit:specVersion", "@type": "xsd:string" },
+    "completenessAttestation": { "@id": "exit:completenessAttestation", "@type": "@id" },
+    "disputeExpiry": { "@id": "exit:disputeExpiry", "@type": "xsd:dateTime" },
+    "resolution": { "@id": "exit:resolution", "@type": "xsd:string" },
+    "arbiterDid": { "@id": "exit:arbiterDid", "@type": "@id" },
+    "sequenceNumber": { "@id": "exit:sequenceNumber", "@type": "xsd:integer" },
+    "PlatformShutdown": { "@id": "exit:PlatformShutdown" },
+    "Directed": { "@id": "exit:Directed" },
+    "Constructive": { "@id": "exit:Constructive" },
+    "Acquisition": { "@id": "exit:Acquisition" }
   }
 }

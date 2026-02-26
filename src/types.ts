@@ -4,7 +4,7 @@
  * The EXIT primitive: a verifiable transition marker — the authenticated
  * declaration of departure that preserves continuity across contexts.
  *
- * @see https://cellar-door.org/exit/v1
+ * @see https://cellar-door.dev/exit/v1
  */
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -19,6 +19,14 @@ export enum ExitType {
   Emergency = "emergency",
   /** Subject declares a key compromise, invalidating markers signed with the compromised key. */
   KeyCompromise = "keyCompromise",
+  /** Platform is shutting down, initiating departures for all agents. */
+  PlatformShutdown = "platform_shutdown",
+  /** Ordered by operator/authority. */
+  Directed = "directed",
+  /** Conditions effectively forced departure (constructive dismissal analog). */
+  Constructive = "constructive",
+  /** Platform acquired/merged, triggering departure. */
+  Acquisition = "acquisition",
 }
 
 /** Standing at departure. Minimal reputation portability. */
@@ -62,7 +70,7 @@ export enum CeremonyState {
 
 /** Cryptographic signature authenticating the EXIT marker. */
 export interface DataIntegrityProof {
-  /** Signature algorithm, e.g. "Ed25519Signature2020", "EcdsaSecp256k1Signature2019" */
+  /** Signature algorithm, e.g. "Ed25519Signature2020", "EcdsaP256Signature2019" */
   type: string;
   /** When the proof was created (ISO 8601 UTC). */
   created: string;
@@ -97,9 +105,22 @@ export interface LegalHold {
  * Remove any one and the marker breaks.
  * ~300-500 bytes. Intentionally small.
  */
+/** Completeness attestation — subject voluntarily attests "these are ALL my markers". */
+export interface CompletenessAttestation {
+  /** When the attestation was made (ISO 8601 UTC). */
+  attestedAt: string;
+  /** Number of markers the subject attests to having created. */
+  markerCount: number;
+  /** Signature over the attestation by the subject. */
+  signature: string;
+}
+
 export interface ExitMarker {
-  /** JSON-LD context. Always "https://cellar-door.org/exit/v1" for v1 markers. */
+  /** JSON-LD context. Always "https://cellar-door.dev/exit/v1" for v1 markers. */
   "@context": string;
+
+  /** Spec version this marker conforms to. */
+  specVersion: string;
 
   /** 1. Globally unique identifier (URI / content-addressed hash). */
   id: string;
@@ -152,8 +173,104 @@ export interface ExitMarker {
   // ─── Ethics & Guardrail Fields ─────────────────────────────────────────
   /** Coercion label attached by ethics analysis. */
   coercionLabel?: CoercionLabel;
-  /** Sunset/expiry date (ISO 8601). After this date the marker is considered expired. */
+  /** Sunset/expiry date (ISO 8601). After this date the marker is considered expired. @deprecated Use `expires` instead. */
   sunsetDate?: string;
+  /** Expiry date (ISO 8601 UTC). All markers MUST include this field. If not specified by the issuer, implementations MUST apply a default: 730 days for voluntary exits, 365 days for involuntary exits. */
+  expires?: string;
+  /** Optional completeness attestation — subject attests "these are ALL my markers". Purely opt-in. */
+  completenessAttestation?: CompletenessAttestation;
+
+  // ─── Checkpoint & Dead-Man Fields ────────────────────────────────────────
+  /** Monotonically increasing checkpoint sequence number. When present, only the highest-sequence marker for a given subject+origin pair is authoritative. */
+  sequenceNumber?: number;
+
+  // ─── Trust Enhancers (Conduit-Only) ──────────────────────────────────────
+  /**
+   * Optional trust-enhancing attachments. Cellar Door acts as a CONDUIT only:
+   * it validates well-formedness of these fields but has ZERO opinion on their
+   * truth, authenticity, or legal significance. Consuming applications decide
+   * what weight (if any) to give these fields.
+   *
+   * Including any of these increases the perceived legitimacy of a marker
+   * but a marker with none is still fully valid (near-zero-trust EXIT).
+   */
+  trustEnhancers?: TrustEnhancers;
+}
+
+// ─── Trust Enhancer Types (Conduit-Only) ───────────────────────────────────
+
+/**
+ * Optional trust-enhancing attachments for EXIT markers.
+ *
+ * These are opaque conduit fields — Cellar Door validates structure,
+ * not truth. No field here creates liability for the protocol.
+ */
+export interface TrustEnhancers {
+  /** RFC 3161 TSA timestamp receipts — third-party proof of time. */
+  timestamps?: TimestampAttachment[];
+  /** External witness countersignatures — third parties attesting "I saw this." */
+  witnesses?: WitnessAttachment[];
+  /** Identity claims — opaque assertions linking the subject to external identities. */
+  identityClaims?: IdentityClaimAttachment[];
+}
+
+/**
+ * An RFC 3161 timestamp attachment.
+ * The TSA is the authority, not Cellar Door. We just carry the receipt.
+ */
+export interface TimestampAttachment {
+  /** TSA endpoint that issued the timestamp. */
+  tsaUrl: string;
+  /** Hex-encoded SHA-256 hash that was timestamped. */
+  hash: string;
+  /** ISO 8601 timestamp extracted from TSR. */
+  timestamp: string;
+  /** Base64-encoded raw Timestamp Response (TSR). */
+  receipt: string;
+  /** Hex-encoded nonce (if any). */
+  nonce?: string;
+}
+
+/**
+ * A witness countersignature — a third party attesting they observed the exit.
+ *
+ * ⚠️ Cellar Door does NOT provide witness services. This field accepts
+ * signatures from EXTERNAL witnesses. Their attestation, their liability.
+ */
+export interface WitnessAttachment {
+  /** DID or key URI of the witness. */
+  witnessDid: string;
+  /** What the witness is attesting to (e.g., "observed departure ceremony"). */
+  attestation: string;
+  /** ISO 8601 timestamp of the witness signature. */
+  timestamp: string;
+  /** Base64-encoded signature over (attestation + marker.id + timestamp). */
+  signature: string;
+  /** Signature algorithm used by the witness. */
+  signatureType: string;
+}
+
+/**
+ * An identity claim attachment — opaque link to an external identity.
+ *
+ * ⚠️ Cellar Door does NOT verify, resolve, or store these claims.
+ * They are accepted as opaque blobs. Verification is the consuming
+ * application's responsibility. This avoids FCRA, GDPR, and credit-
+ * reporting liability.
+ */
+export interface IdentityClaimAttachment {
+  /** Type of identity system (e.g., "did:web", "did:ion", "x509", "oauth2", "opaque"). */
+  scheme: string;
+  /** The identity value (DID, certificate fingerprint, opaque token, etc.). */
+  value: string;
+  /** ISO 8601 timestamp of when the claim was made. */
+  issuedAt: string;
+  /** Optional expiry (ISO 8601). After this, the claim should be considered stale. */
+  expiresAt?: string;
+  /** Optional issuer DID or URI. */
+  issuer?: string;
+  /** Optional base64-encoded proof/signature from the issuer. */
+  proof?: string;
 }
 
 // ─── Module A: Lineage (Agent Continuity) ────────────────────────────────────
@@ -233,6 +350,12 @@ export interface Dispute {
   evidenceHash?: string;
   /** When the challenge was filed (ISO 8601). */
   filedAt: string;
+  /** When the dispute expires (ISO 8601). */
+  disputeExpiry?: string;
+  /** Resolution status of the dispute. */
+  resolution?: "settled" | "expired" | "withdrawn";
+  /** DID of the arbiter handling the dispute. */
+  arbiterDid?: string;
 }
 
 export interface ChallengeWindow {
@@ -246,7 +369,23 @@ export interface ChallengeWindow {
 
 // ─── Module D: Economic ──────────────────────────────────────────────────────
 
-/** For exits involving assets or financial obligations. */
+/**
+ * For exits involving assets or financial obligations.
+ *
+ * ⚠️ **SECURITIES DISCLAIMER**: The contents of Module D asset manifests may
+ * constitute securities disclosures depending on the nature of the assets
+ * referenced. If `assetManifest` entries reference tokens, shares, investment
+ * contracts, or other instruments that could be classified as securities under
+ * the Howey test (SEC v. W.J. Howey Co., 1946) or equivalent international
+ * frameworks, additional regulatory obligations may apply to platforms that
+ * display, aggregate, or make decisions based on this data.
+ *
+ * Cellar Door EXIT does NOT provide legal, financial, or securities advice.
+ * This module is a data transport mechanism only. Consult qualified counsel
+ * before using Module D data in any context where securities law may apply.
+ *
+ * See: assessments/howey-module-d-v2.md for detailed analysis.
+ */
 export interface ModuleD {
   /** Assets being ported (type + amount + destination, as references). */
   assetManifest?: AssetReference[];
@@ -561,4 +700,5 @@ export interface EthicsReport {
   overallRisk: "low" | "medium" | "high" | "critical";
 }
 
-export const EXIT_CONTEXT_V1 = "https://cellar-door.org/exit/v1" as const;
+export const EXIT_CONTEXT_V1 = "https://cellar-door.dev/exit/v1" as const;
+export const EXIT_SPEC_VERSION = "1.1" as const;
