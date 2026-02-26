@@ -89,8 +89,8 @@ async function tryGitLedger(
 ): Promise<any | undefined> {
   try {
     const ledger = await import("./git-ledger.js");
-    if (typeof ledger.appendEntry === "function") {
-      return await ledger.appendEntry(marker, anchorHash, config);
+    if (typeof ledger.anchorToGit === "function") {
+      return await ledger.anchorToGit(marker, config);
     }
   } catch {
     // git-ledger module not available yet — that's fine
@@ -101,8 +101,8 @@ async function tryGitLedger(
 async function tryVisual(marker: ExitMarker): Promise<string | undefined> {
   try {
     const vis = await import("./visual.js");
-    if (typeof vis.renderDoor === "function") {
-      return vis.renderDoor(marker);
+    if (typeof vis.renderDoorASCII === "function") {
+      return vis.renderDoorASCII(marker.id || "");
     }
   } catch {
     // visual module not available yet — that's fine
@@ -113,8 +113,8 @@ async function tryVisual(marker: ExitMarker): Promise<string | undefined> {
 async function tryVerifyTsa(receipt: any): Promise<boolean | undefined> {
   try {
     const tsa = await import("./tsa.js");
-    if (typeof tsa.verifyTimestamp === "function") {
-      return await tsa.verifyTimestamp(receipt);
+    if (typeof tsa.verifyTSAReceipt === "function") {
+      return await tsa.verifyTSAReceipt(receipt, receipt.hash);
     }
   } catch {
     // tsa module not available yet
