@@ -140,7 +140,7 @@ describe("departAndVerify", () => {
     const result = await departAndVerify(marker, fakeReceipt);
 
     expect(result.valid).toBe(true);
-    // TSA module not loaded, so tsaVerified is undefined
+    // TSA module not loaded, so tsaStructuralMatch is undefined
     expect(result.reasons).toEqual(
       expect.arrayContaining([
         expect.stringContaining("TSA module not available"),

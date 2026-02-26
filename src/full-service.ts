@@ -59,7 +59,8 @@ export interface VerifyResult {
   trustLevel: TrustLevel;
   anchorHash: string;
   signatureValid: boolean;
-  tsaVerified?: boolean;
+  /** Structural plausibility check only — does NOT verify TSA cryptographic signature. Do not use for trust decisions. */
+  tsaStructuralMatch?: boolean;
   ledgerVerified?: boolean;
   reasons: string[];
 }
@@ -248,28 +249,31 @@ export async function departAndVerify(
   reasons.push(`Anchor hash: ${anchorHash.slice(0, 16)}…`);
 
   // Check TSA receipt if provided
-  let tsaVerified: boolean | undefined;
+  let tsaStructuralMatch: boolean | undefined;
   if (tsaReceipt) {
-    tsaVerified = await tryVerifyTsa(tsaReceipt);
-    if (tsaVerified === true) {
-      reasons.push("TSA receipt verified");
-    } else if (tsaVerified === false) {
-      reasons.push("TSA receipt verification failed");
+    tsaStructuralMatch = await tryVerifyTsa(tsaReceipt);
+    if (tsaStructuralMatch === true) {
+      reasons.push("TSA receipt structurally plausible (cryptographic verification requires external tooling)");
+    } else if (tsaStructuralMatch === false) {
+      reasons.push("TSA receipt structural check failed");
     } else {
       reasons.push("TSA module not available — receipt not checked");
     }
   }
 
   // Compute trust level
+  // NOTE: TSA structural match alone does NOT elevate trust to "high" —
+  // structural checks can be trivially forged. Full cryptographic TSA
+  // verification (via openssl ts -verify or ASN.1/PKCS library) is required
+  // for "high" trust. Until crypto verification is implemented, TSA presence
+  // contributes to "medium" trust at most.
   let trustLevel: TrustLevel;
   if (!signatureValid) {
     trustLevel = "none";
-  } else if (tsaReceipt && tsaVerified === true) {
-    trustLevel = "high";
-  } else if (tsaReceipt && tsaVerified === false) {
+  } else if (tsaReceipt && tsaStructuralMatch === false) {
     trustLevel = "low";
   } else {
-    // Valid signature, no TSA
+    // Valid signature, with or without TSA (structural match doesn't elevate beyond medium)
     trustLevel = "medium";
   }
 
@@ -278,7 +282,7 @@ export async function departAndVerify(
     trustLevel,
     anchorHash,
     signatureValid,
-    tsaVerified,
+    tsaStructuralMatch,
     reasons,
   };
 }

@@ -1204,7 +1204,7 @@ Entry-side counterpart: takes a marker (JSON string or object), verifies its sig
 | `trustLevel` | enum | `"high"`, `"medium"`, `"low"`, or `"none"` |
 | `anchorHash` | string | Computed anchor hash |
 | `signatureValid` | boolean | Whether the Ed25519 signature verified |
-| `tsaVerified` | boolean | OPTIONAL. Whether the TSA receipt passed structural verification |
+| `tsaStructuralMatch` | boolean | OPTIONAL. Whether the TSA receipt passed structural plausibility check (does NOT verify cryptographic signature — do not use for trust decisions) |
 | `reasons` | array of string | Human-readable verification details |
 
 **Trust Level Computation:**
