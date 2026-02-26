@@ -1,6 +1,6 @@
 {
   "name": "cellar-door-exit",
-  "version": "0.2.1",
+  "version": "0.2.0",
   "type": "module",
   "description": "Verifiable EXIT markers — the authenticated declaration of departure that preserves continuity across contexts.",
   "main": "dist/index.cjs",
@@ -35,7 +35,8 @@
     "lint": "tsc --noEmit",
     "demo:voluntary": "npx tsx src/demo/scenario1-voluntary.ts",
     "demo:emergency": "npx tsx src/demo/scenario2-emergency.ts",
-    "demo:successor": "npx tsx src/demo/scenario3-successor.ts"
+    "demo:successor": "npx tsx src/demo/scenario3-successor.ts",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@noble/ciphers": "^2.1.1",
