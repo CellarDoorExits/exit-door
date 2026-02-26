@@ -52,26 +52,29 @@ describe("Performance Benchmarks", () => {
     results.push(["Ceremony creation", String(n), ms.toFixed(3)]);
   });
 
-  test("State transitions", () => {
+  test("State transitions", async () => {
     const n = 1000;
     // Full cooperative path: Alive→Intent→Snapshot→Open→Final→Departed
-    const ms = bench("Full cooperative path", () => {
+    const start1 = performance.now();
+    for (let i = 0; i < n; i++) {
       const { privateKey, publicKey, did } = generateIdentity();
       const c = new CeremonyStateMachine();
-      c.declareIntent(did, "https://bench.example.com", ExitType.Voluntary, privateKey, publicKey);
+      await c.declareIntent(did, "https://bench.example.com", ExitType.Voluntary, privateKey, publicKey);
       c.snapshot();
       c.openChallenge();
       const m = makeMarker(did);
-      c.signMarker(m, privateKey, publicKey);
+      await c.signMarker(m, privateKey, publicKey);
       c.depart();
-    }, n);
+    }
+    const ms = performance.now() - start1;
     results.push(["Full ceremony path (×" + n + ")", String(n), ms.toFixed(3)]);
 
     // Emergency path
-    const ms2 = bench("Emergency path", () => {
+    const start2 = performance.now();
+    for (let i = 0; i < n; i++) {
       const { privateKey, publicKey, did } = generateIdentity();
       const c = new CeremonyStateMachine();
-      c.declareIntent(did, "https://bench.example.com", ExitType.Emergency, privateKey, publicKey);
+      await c.declareIntent(did, "https://bench.example.com", ExitType.Emergency, privateKey, publicKey);
       const m = createMarker({
         subject: did,
         origin: "https://bench.example.com",
@@ -79,19 +82,22 @@ describe("Performance Benchmarks", () => {
         status: ExitStatus.Final,
         emergencyJustification: "benchmark test",
       });
-      c.signMarker(m, privateKey, publicKey);
+      await c.signMarker(m, privateKey, publicKey);
       c.depart();
-    }, n);
+    }
+    const ms2 = performance.now() - start2;
     results.push(["Emergency path (×" + n + ")", String(n), ms2.toFixed(3)]);
   });
 
-  test("signIntent latency (via declareIntent)", () => {
+  test("signIntent latency (via declareIntent)", async () => {
     const n = 1000;
     const { privateKey, publicKey, did } = identity;
-    const ms = bench("signIntent", () => {
+    const start = performance.now();
+    for (let i = 0; i < n; i++) {
       const c = new CeremonyStateMachine();
-      c.declareIntent(did, "https://bench.example.com", ExitType.Voluntary, privateKey, publicKey);
-    }, n);
+      await c.declareIntent(did, "https://bench.example.com", ExitType.Voluntary, privateKey, publicKey);
+    }
+    const ms = performance.now() - start;
     results.push(["Intent signing (declareIntent)", String(n), ms.toFixed(3)]);
   });
 

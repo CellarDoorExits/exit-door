@@ -11,7 +11,7 @@ import { CeremonyState, ExitType } from "./types.js";
 import type { ExitMarker, ExitIntent, DataIntegrityProof } from "./types.js";
 import { sign, didFromPublicKey } from "./crypto.js";
 import { canonicalize } from "./marker.js";
-import { signMarker, signMarkerWithSigner } from "./proof.js";
+import { signMarker } from "./proof.js";
 import { CeremonyError } from "./errors.js";
 import type { Signer } from "./signer.js";
 import { proofTypeForAlgorithm } from "./signer.js";
@@ -94,34 +94,34 @@ export class CeremonyStateMachine {
    * @returns A signed {@link ExitIntent}.
    * @throws {CeremonyError} If the transition is invalid.
    */
-  declareIntent(
+  async declareIntent(
     subject: string,
     origin: string,
     exitType: ExitType,
     signerOrPrivateKey: Signer | Uint8Array,
     publicKey?: Uint8Array
-  ): ExitIntent {
+  ): Promise<ExitIntent> {
     this.exitType = exitType;
 
     // Emergency path goes straight to FINAL
     if (exitType === ExitType.Emergency) {
       // Don't transition yet — will go ALIVE → FINAL on sign
-      this.intent = this.buildIntent(subject, origin, exitType, signerOrPrivateKey, publicKey);
+      this.intent = await this.buildIntent(subject, origin, exitType, signerOrPrivateKey, publicKey);
       return this.intent;
     }
 
     this.transition(CeremonyState.Intent);
-    this.intent = this.buildIntent(subject, origin, exitType, signerOrPrivateKey, publicKey);
+    this.intent = await this.buildIntent(subject, origin, exitType, signerOrPrivateKey, publicKey);
     return this.intent;
   }
 
-  private buildIntent(
+  private async buildIntent(
     subject: string,
     origin: string,
     exitType: ExitType,
     signerOrPrivateKey: Signer | Uint8Array,
     publicKey?: Uint8Array
-  ): ExitIntent {
+  ): Promise<ExitIntent> {
     const timestamp = new Date().toISOString();
     const intentData = { subject, origin, timestamp, exitType };
     const data = new TextEncoder().encode("exit-intent-v1:" + canonicalize(intentData));
@@ -136,9 +136,8 @@ export class CeremonyStateMachine {
       did = didFromPublicKey(publicKey!);
       proofType = "Ed25519Signature2020";
     } else {
-      // Signer abstraction path
-      const result = signerOrPrivateKey.sign(data);
-      sig = result instanceof Promise ? undefined as never : result;
+      // Signer abstraction path — await to support async signers (HSM/KMS)
+      sig = await signerOrPrivateKey.sign(data);
       did = signerOrPrivateKey.did();
       proofType = proofTypeForAlgorithm(signerOrPrivateKey.algorithm);
     }
@@ -195,24 +194,16 @@ export class CeremonyStateMachine {
    * @returns The signed EXIT marker.
    * @throws {CeremonyError} If the transition to FINAL is invalid.
    */
-  signMarker(marker: ExitMarker, signerOrPrivateKey: Signer | Uint8Array, publicKey?: Uint8Array): ExitMarker {
-    if (this.exitType === ExitType.Emergency && this.state === CeremonyState.Alive) {
-      this.transition(CeremonyState.Final);
-    } else {
-      this.transition(CeremonyState.Final);
-    }
+  async signMarker(marker: ExitMarker, signerOrPrivateKey: Signer | Uint8Array, publicKey?: Uint8Array): Promise<ExitMarker> {
+    this.transition(CeremonyState.Final);
     if (signerOrPrivateKey instanceof Uint8Array) {
       this.marker = signMarker(marker, signerOrPrivateKey, publicKey!);
     } else {
-      // Use sync path — signMarkerWithSigner is async but Signer.sign can be sync
       const signer = signerOrPrivateKey;
-      this.marker = signMarker(marker, signer.publicKey(), signer.publicKey());
-      // Re-sign properly using the signer abstraction via proof.ts
       const { proof: _proof, id: _id, ...rest } = marker;
       const canonical = canonicalize(rest);
       const data = new TextEncoder().encode("exit-marker-v1.1:" + canonical);
-      const sig = signer.sign(data);
-      if (sig instanceof Promise) throw new Error("Async signers not supported in sync signMarker — use signMarkerWithSigner");
+      const sig = await signer.sign(data);
       this.marker = {
         ...marker,
         proof: {
@@ -236,7 +227,7 @@ export class CeremonyStateMachine {
    * @returns A {@link DataIntegrityProof} containing the witness's co-signature.
    * @throws {CeremonyError} If the current state is not FINAL or no marker has been signed.
    */
-  witness(signerOrWitnessKey: Signer | Uint8Array, witnessPublicKey?: Uint8Array): DataIntegrityProof {
+  async witness(signerOrWitnessKey: Signer | Uint8Array, witnessPublicKey?: Uint8Array): Promise<DataIntegrityProof> {
     if (this.state !== CeremonyState.Final) {
       throw new CeremonyError(this.state, "witness (requires final)", getValidTransitions(this.state).map(s => s as string));
     }
@@ -255,8 +246,7 @@ export class CeremonyStateMachine {
       };
     } else {
       const signer = signerOrWitnessKey;
-      const sig = signer.sign(data);
-      if (sig instanceof Promise) throw new Error("Async signers not supported in sync witness");
+      const sig = await signer.sign(data);
       return {
         type: proofTypeForAlgorithm(signer.algorithm),
         created: new Date().toISOString(),

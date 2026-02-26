@@ -106,14 +106,14 @@ describe("ExitMarker", () => {
 });
 
 describe("CeremonyStateMachine", () => {
-  it("completes the full voluntary path", () => {
+  it("completes the full voluntary path", async () => {
     const { publicKey, privateKey } = generateKeyPair();
     const sm = new CeremonyStateMachine();
 
     expect(sm.state).toBe("alive");
 
     const did = didFromPublicKey(publicKey);
-    sm.declareIntent(did, "https://origin.com", ExitType.Voluntary, privateKey, publicKey);
+    await sm.declareIntent(did, "https://origin.com", ExitType.Voluntary, privateKey, publicKey);
     expect(sm.state).toBe("intent");
 
     sm.snapshot();
@@ -125,11 +125,11 @@ describe("CeremonyStateMachine", () => {
       exitType: ExitType.Voluntary,
     });
 
-    sm.signMarker(marker, privateKey, publicKey);
+    await sm.signMarker(marker, privateKey, publicKey);
     expect(sm.state).toBe("final");
 
     const { publicKey: wPub, privateKey: wPriv } = generateKeyPair();
-    const witnessProof = sm.witness(wPriv, wPub);
+    const witnessProof = await sm.witness(wPriv, wPub);
     expect(witnessProof.type).toBe("Ed25519Signature2020");
     expect(sm.state).toBe("final");
 
@@ -138,12 +138,12 @@ describe("CeremonyStateMachine", () => {
     expect(departed).toBeTruthy();
   });
 
-  it("supports emergency shortcut: ALIVE → FINAL → DEPARTED", () => {
+  it("supports emergency shortcut: ALIVE → FINAL → DEPARTED", async () => {
     const { publicKey, privateKey } = generateKeyPair();
     const sm = new CeremonyStateMachine();
 
     const did = didFromPublicKey(publicKey);
-    sm.declareIntent(did, "https://dying.org", ExitType.Emergency, privateKey, publicKey);
+    await sm.declareIntent(did, "https://dying.org", ExitType.Emergency, privateKey, publicKey);
     // Emergency stays in ALIVE, goes to FINAL on sign
     expect(sm.state).toBe("alive");
 
@@ -154,7 +154,7 @@ describe("CeremonyStateMachine", () => {
       emergencyJustification: "Platform is dying",
     });
 
-    sm.signMarker(marker, privateKey, publicKey);
+    await sm.signMarker(marker, privateKey, publicKey);
     expect(sm.state).toBe("final");
 
     sm.depart();

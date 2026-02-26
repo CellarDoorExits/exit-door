@@ -1,2 +1,8 @@
 node_modules/
 dist/
+docs/analysis/
+PITCH_*
+NIST_*
+docs/NIST_*
+DECISIONS.md
+LEGAL.md

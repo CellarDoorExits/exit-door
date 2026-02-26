@@ -119,7 +119,7 @@ An EXIT marker is a JSON-LD document containing seven mandatory fields:
 
 ```json
 {
-  "@context": "https://cellar-door.org/exit/v1",
+  "@context": "https://cellar-door.dev/exit/v1",
   "id": "urn:exit:{sha256-hash}",
   "subject": "{DID of departing entity}",
   "origin": "{URI of platform being departed}",
@@ -146,6 +146,10 @@ Four exit types capture the primary departure scenarios:
 - **Forced:** Origin-initiated expulsion or removal.
 - **Emergency:** Departure under abnormal conditions (platform failure, safety concerns). Requires a free-text `emergencyJustification` field.
 - **Key compromise:** Declaration that a previously-used signing key has been compromised. Signed with a different, trusted key.
+- **Platform shutdown:** The origin platform is shutting down or reaching end-of-life.
+- **Directed:** Departure ordered by an external authority (operator, regulator).
+- **Constructive:** Conditions at the origin effectively forced departure (constructive dismissal analog).
+- **Acquisition:** The origin platform was acquired or merged, triggering a transition event.
 
 ### 3.3 Optional Modules
 

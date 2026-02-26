@@ -100,7 +100,8 @@ export class P256Signer implements Signer {
   }
 
   sign(data: Uint8Array): Uint8Array {
-    return signP256(data, this.#privateKey);
+    const sig: Uint8Array = signP256(data, this.#privateKey);
+    return new Uint8Array(sig);
   }
 
   verify(data: Uint8Array, signature: Uint8Array): boolean {

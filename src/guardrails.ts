@@ -153,8 +153,9 @@ export function validateEthicalCompliance(marker: ExitMarker): EthicalCompliance
     violations.push("Emergency exit without justification violates ethical transparency requirements.");
   }
 
-  // Sunset: markers with sunset dates in the past should be flagged
-  if (marker.sunsetDate && new Date(marker.sunsetDate) < new Date()) {
+  // Sunset: markers with sunset/expires dates in the past should be flagged
+  const expiryDate = marker.expires || marker.sunsetDate;
+  if (expiryDate && new Date(expiryDate) < new Date()) {
     violations.push("Marker has passed its sunset date and should no longer be relied upon.");
   }
 
@@ -201,6 +202,7 @@ export function applySunset(marker: ExitMarker, policy: SunsetPolicy): ExitMarke
  * ```
  */
 export function isExpired(marker: ExitMarker): boolean {
-  if (!marker.sunsetDate) return false;
-  return new Date(marker.sunsetDate) < new Date();
+  const expiryDate = marker.expires || marker.sunsetDate;
+  if (!expiryDate) return false;
+  return new Date(expiryDate) < new Date();
 }
