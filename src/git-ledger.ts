@@ -148,7 +148,7 @@ export async function anchorToGit(marker: ExitMarker, config: GitLedgerConfig): 
   await git(config, "checkout", branch(config));
 
   const record = createAnchorRecord(marker);
-  const filePath = join("ledger", `${record.hash}.json`);
+  const filePath = join("ledger", `${record.hash}.json`).replace(/\\/g, "/");
   const absPath = join(config.repoPath, filePath);
 
   const committedAt = new Date().toISOString();
