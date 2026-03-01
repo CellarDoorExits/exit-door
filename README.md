@@ -2,6 +2,8 @@
 
 **Right of Passage** — verifiable EXIT markers for AI agents, platforms, and DAOs.
 
+www.cellar-door.dev
+
 ## The Problem
 
 Your AI agent worked for months on Platform A. It built reputation, completed tasks, earned trust. Now it needs to move to Platform B. How does Platform B know any of that happened? How does the agent prove it wasn't fired for cause?
