@@ -1125,7 +1125,7 @@ The `renderDoorASCII(hash, options?)` function produces a 10-line, 21-column-wid
 | exitType | Frame Style | Panel Fill | Damage |
 |---|---|---|---|
 | `voluntary` | Rounded, elegant | Light (░·) | None |
-| `platform_initiated` | Double-line, institutional | Heavy (▓█) | None |
+| `platform_shutdown` | Double-line, institutional | Heavy (▓█) | None |
 | `emergency` | Heavy, broken | Medium (▒░) | Aggressive cracking |
 
 | status | Effect |
@@ -1253,12 +1253,15 @@ EXIT uses deterministic JSON serialization with recursively sorted keys:
 3. Primitives: standard JSON serialization
 4. No whitespace between tokens
 
-This ensures the same logical marker always produces the same byte sequence.
+This ensures the same logical marker always produces the same byte sequence. String values MUST be NFC-normalized (Unicode Normalization Form C) before canonicalization.
+
+> **Note:** EXIT canonicalization is NOT RFC 8785 (JSON Canonicalization Scheme). It uses recursive key sorting with standard JSON serialization and NFC string normalization. Number serialization follows standard `JSON.stringify` behavior.
 
 **Normative Requirements:**
 
 - Canonicalization MUST be deterministic: the same input MUST always produce the same output
 - Implementations MUST use recursive key sorting for objects
+- String values MUST be NFC-normalized before canonicalization
 - Content-addressed IDs MUST be computed from the canonical form
 
 ### 13.2 Content-Addressed IDs
@@ -1335,6 +1338,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "voluntary",
   "status": "good_standing",
   "selfAttested": true,
+  "expires": "2028-01-14T10:30:00.000Z",
   "proof": {
     "type": "Ed25519Signature2020",
     "created": "2026-01-15T10:30:00.000Z",
@@ -1357,6 +1361,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "emergency",
   "status": "unverified",
   "selfAttested": true,
+  "expires": "2027-01-20T03:45:00.000Z",
   "emergencyJustification": "Origin platform unresponsive for 72+ hours. DNS resolution failing.",
   "proof": {
     "type": "Ed25519Signature2020",
@@ -1380,6 +1385,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "voluntary",
   "status": "good_standing",
   "selfAttested": true,
+  "expires": "2028-01-31T14:00:00.000Z",
   "legalHold": {
     "holdType": "litigation_hold",
     "authority": "US District Court, Northern District of California",
@@ -1409,6 +1415,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "keyCompromise",
   "status": "unverified",
   "selfAttested": true,
+  "expires": "2027-02-10T08:00:00.000Z",
   "metadata": {
     "reason": "Private key exposed in a server breach on 2026-02-09.",
     "tags": ["key-compromise", "security-incident"]
@@ -1435,6 +1442,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "voluntary",
   "status": "good_standing",
   "selfAttested": true,
+  "expires": "2028-02-14T12:00:00.000Z",
   "preRotationCommitment": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd",
   "proof": {
     "type": "Ed25519Signature2020",
@@ -1458,6 +1466,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "forced",
   "status": "good_standing",
   "selfAttested": true,
+  "expires": "2027-02-18T09:00:00.000Z",
   "coercionLabel": "possible_retaliation",
   "sunsetDate": "2027-02-18T09:00:00.000Z",
   "dispute": {
@@ -1547,6 +1556,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "platform_shutdown",
   "status": "unverified",
   "selfAttested": true,
+  "expires": "2027-03-01T00:00:00.000Z",
   "metadata": {
     "reason": "Platform ceasing operations effective 2026-03-31.",
     "tags": ["platform-shutdown", "planned"]
@@ -1573,6 +1583,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "exitType": "constructive",
   "status": "disputed",
   "selfAttested": true,
+  "expires": "2027-03-10T15:00:00.000Z",
   "completenessAttestation": {
     "attestedAt": "2026-03-10T15:30:00.000Z",
     "markerCount": 3,
@@ -1828,4 +1839,4 @@ Checkpoint markers use the standard `ExitMarker` schema with the following conve
 
 *Departure is a right. Admission is a privilege. Together they make Passage.* 𓉸
 
-*291 tests. 5 packages. One protocol.*
+*410 tests. 5 packages. One protocol.*

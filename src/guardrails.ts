@@ -184,7 +184,8 @@ export function applySunset(marker: ExitMarker, policy: SunsetPolicy): ExitMarke
 
   return {
     ...marker,
-    sunsetDate: sunsetDate.toISOString(),
+    expires: sunsetDate.toISOString(),
+    sunsetDate: sunsetDate.toISOString(), // backward compat (deprecated)
   };
 }
 
