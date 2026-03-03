@@ -165,6 +165,8 @@ The `proof` object MUST contain:
 
 The data signed MUST be the canonical JSON form (§13.1) of the marker excluding the `proof` and `id` fields. Implementations MUST prepend the domain separation string `exit-marker-v1.1:` to the canonical marker content before signing or verifying. This prevents cross-protocol signature replay attacks.
 
+**Version Migration:** The domain separation prefix is versioned to prevent cross-version replay. When a new specification version introduces a new prefix, verifiers MUST accept signatures using both the current and immediately prior version prefix for a transition period of at least 365 days from the new version's publication date. After the transition period, verifiers MAY reject the prior prefix. Signers MUST always use the current version's prefix.
+
 #### 3.5.1 Supported Signature Algorithms
 
 | `proof.type` | Algorithm | Key Size | FIPS 140-2/3 | Notes |
@@ -1212,9 +1214,12 @@ Entry-side counterpart: takes a marker (JSON string or object), verifies its sig
 | Condition | Trust Level |
 |---|---|
 | Signature invalid | `none` |
-| Signature valid + TSA verified | `high` |
+| Signature valid + TSA cryptographically verified | `high` |
+| Signature valid + TSA structurally plausible | `medium` |
 | Signature valid + TSA failed | `low` |
 | Signature valid, no TSA | `medium` |
+
+> **Implementation Note:** The `high` trust level requires full cryptographic verification of the TSA's signature chain (e.g., via `openssl ts -verify` or an ASN.1/PKCS library). The reference implementation currently provides structural TSA verification only, which caps trust at `medium`. The `high` level is defined for forward compatibility with implementations that perform full certificate chain validation.
 
 ### 12.8 Event Emission
 
