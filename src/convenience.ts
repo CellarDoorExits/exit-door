@@ -82,7 +82,7 @@ export function quickExit(origin: string, opts?: QuickExitOpts): QuickExitResult
   if (alg === 'p256') {
     const { proof: _proof, id: _id, ...rest } = marker;
     const canonical = canonicalize(rest);
-    const data = new TextEncoder().encode("exit-marker-v1.1:" + canonical);
+    const data = new TextEncoder().encode("exit-marker-v1.2:" + canonical);
     const signature = signP256(data, identity.privateKey);
     const proofValue = Buffer.from(signature).toString("base64");
     const proof: DataIntegrityProof = {

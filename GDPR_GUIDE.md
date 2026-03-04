@@ -269,7 +269,7 @@ Response: {
 
 ### 5.2 Art. 16 — Right to Rectification
 
-**Implementation:** The `MarkerAmendment` mechanism (EXIT Spec §7) maps directly to Art. 16.
+**Implementation:** The `MarkerAmendment` mechanism (EXIT Spec §6) maps directly to Art. 16.
 
 - Subject requests rectification of inaccurate `originStatus` or other factual errors
 - Origin platform investigates (align with the 30-day FCRA dispute timeline — satisfies both regimes)
@@ -418,7 +418,7 @@ The following template is pre-filled for EXIT. Adapt it to your specific impleme
 >
 > | Measure | Status |
 > |---|---|
-> | MarkerAmendment mechanism for rectification | Implemented (Spec v1.2 §7) |
+> | MarkerAmendment mechanism for rectification | Implemented (Spec v1.2 §6) |
 > | Sunset periods (365/730 days) | Implemented |
 > | Anti-weaponization clause | Implemented (Spec v1.2 §8.6) |
 > | Per-marker encryption with crypto-shredding capability | Implemented (privacy tier) |

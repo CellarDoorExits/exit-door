@@ -22,24 +22,30 @@ export interface SignedProof {
   proofValue: string;
 }
 
-export interface AmendmentMarker {
+export interface MarkerAmendment {
   amendmentId: string;
-  type: "AmendmentMarker";
+  type: "MarkerAmendment";
   originalMarkerId: string;
   amendedFields: Record<string, unknown>;
   reason: string;
-  created: string;
+  timestamp: string;
   proof?: SignedProof;
 }
 
-export interface RevocationMarker {
+/** @deprecated Use {@link MarkerAmendment} instead. */
+export type AmendmentMarker = MarkerAmendment;
+
+export interface MarkerRevocation {
   revocationId: string;
-  type: "RevocationMarker";
+  type: "MarkerRevocation";
   targetMarkerId: string;
   reason: string;
-  created: string;
+  timestamp: string;
   proof?: SignedProof;
 }
+
+/** @deprecated Use {@link MarkerRevocation} instead. */
+export type RevocationMarker = MarkerRevocation;
 
 export interface ResolvedMarker {
   marker: ExitMarker;
@@ -60,15 +66,15 @@ export async function createAmendment(
   amendedFields: Record<string, unknown>,
   reason: string,
   signer: Signer,
-): Promise<AmendmentMarker> {
-  const created = new Date().toISOString();
+): Promise<MarkerAmendment> {
+  const timestamp = new Date().toISOString();
 
-  const unsigned: Omit<AmendmentMarker, "amendmentId" | "proof"> = {
-    type: "AmendmentMarker",
+  const unsigned: Omit<MarkerAmendment, "amendmentId" | "proof"> = {
+    type: "MarkerAmendment",
     originalMarkerId: originalMarker.id,
     amendedFields,
     reason,
-    created,
+    timestamp,
   };
 
   const canonical = canonicalize(unsigned);
@@ -83,7 +89,7 @@ export async function createAmendment(
     ...unsigned,
     proof: {
       type: proofTypeForAlgorithm(signer.algorithm),
-      created,
+      created: timestamp,
       verificationMethod: signer.did(),
       proofValue,
     },
@@ -91,20 +97,20 @@ export async function createAmendment(
 }
 
 /**
- * Create a signed RevocationMarker.
+ * Create a signed MarkerRevocation.
  */
 export async function createRevocation(
   targetMarkerId: string,
   reason: string,
   signer: Signer,
-): Promise<RevocationMarker> {
-  const created = new Date().toISOString();
+): Promise<MarkerRevocation> {
+  const timestamp = new Date().toISOString();
 
-  const unsigned: Omit<RevocationMarker, "revocationId" | "proof"> = {
-    type: "RevocationMarker",
+  const unsigned: Omit<MarkerRevocation, "revocationId" | "proof"> = {
+    type: "MarkerRevocation",
     targetMarkerId,
     reason,
-    created,
+    timestamp,
   };
 
   const canonical = canonicalize(unsigned);
@@ -119,7 +125,7 @@ export async function createRevocation(
     ...unsigned,
     proof: {
       type: proofTypeForAlgorithm(signer.algorithm),
-      created,
+      created: timestamp,
       verificationMethod: signer.did(),
       proofValue,
     },
@@ -129,16 +135,16 @@ export async function createRevocation(
 /**
  * Apply a single amendment to a marker. Returns a new object.
  */
-export function applyAmendment(marker: ExitMarker, amendment: AmendmentMarker): ExitMarker {
+export function applyAmendment(marker: ExitMarker, amendment: MarkerAmendment): ExitMarker {
   return { ...marker, ...amendment.amendedFields } as ExitMarker;
 }
 
 /**
  * Apply multiple amendments in creation-time order. Returns a new object.
  */
-export function applyAmendments(marker: ExitMarker, amendments: AmendmentMarker[]): ExitMarker {
+export function applyAmendments(marker: ExitMarker, amendments: MarkerAmendment[]): ExitMarker {
   const sorted = [...amendments].sort((a, b) =>
-    new Date(a.created).getTime() - new Date(b.created).getTime()
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
   return sorted.reduce((m, a) => applyAmendment(m, a), marker);
 }
@@ -148,8 +154,8 @@ export function applyAmendments(marker: ExitMarker, amendments: AmendmentMarker[
  */
 export function resolveMarker(
   marker: ExitMarker,
-  amendments: AmendmentMarker[],
-  revocations: RevocationMarker[],
+  amendments: MarkerAmendment[],
+  revocations: MarkerRevocation[],
 ): ResolvedMarker {
   const resolved = applyAmendments(marker, amendments);
   const isRevoked = revocations.some(r => r.targetMarkerId === marker.id);
@@ -164,7 +170,7 @@ export function resolveMarker(
  * Verify an amendment's signature against the expected signer DID.
  */
 export async function verifyAmendmentSignature(
-  amendment: AmendmentMarker,
+  amendment: MarkerAmendment,
   signer: Signer,
 ): Promise<boolean> {
   if (!amendment.proof) return false;
@@ -182,7 +188,7 @@ export async function verifyAmendmentSignature(
  * Verify a revocation's signature against the expected signer DID.
  */
 export async function verifyRevocationSignature(
-  revocation: RevocationMarker,
+  revocation: MarkerRevocation,
   signer: Signer,
 ): Promise<boolean> {
   if (!revocation.proof) return false;

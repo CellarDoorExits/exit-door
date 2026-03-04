@@ -701,4 +701,4 @@ export interface EthicsReport {
 }
 
 export const EXIT_CONTEXT_V1 = "https://cellar-door.dev/exit/v1" as const;
-export const EXIT_SPEC_VERSION = "1.1" as const;
+export const EXIT_SPEC_VERSION = "1.2" as const;
