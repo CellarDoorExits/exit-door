@@ -113,8 +113,8 @@ async function tryVisual(marker: ExitMarker): Promise<string | undefined> {
 async function tryVerifyTsa(receipt: any): Promise<boolean | undefined> {
   try {
     const tsa = await import("./tsa.js");
-    if (typeof tsa.verifyTSAReceipt === "function") {
-      return await tsa.verifyTSAReceipt(receipt, receipt.hash);
+    if (typeof tsa.checkTSAReceiptStructure === "function") {
+      return await tsa.checkTSAReceiptStructure(receipt, receipt.hash);
     }
   } catch {
     // tsa module not available yet

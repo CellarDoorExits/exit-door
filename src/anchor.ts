@@ -7,17 +7,22 @@
 
 import { sha256 } from "@noble/hashes/sha256";
 import { canonicalize } from "./marker.js";
-import type { ExitMarker } from "./types.js";
+import { EXIT_SPEC_VERSION, type ExitMarker } from "./types.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-/** Minimal anchor: just a hash and timestamp. The absolute bare minimum for a ledger. */
+/** Minimal anchor: hash, timestamp, and spec version. GDPR-safe — no personal data. */
 export interface MinimalAnchorRecord {
   hash: string;
   timestamp: string;
+  specVersion: string;
 }
 
-/** Standard anchor: hash + minimal public metadata. */
+/**
+ * Standard anchor: hash + public metadata including subject DID.
+ * @deprecated Use {@link MinimalAnchorRecord} instead to avoid anchoring personal data.
+ * This type will be removed in a future major version.
+ */
 export interface AnchorRecord extends MinimalAnchorRecord {
   exitType: string;
   subjectDid: string;
@@ -49,24 +54,35 @@ export function computeAnchorHash(marker: ExitMarker): string {
 }
 
 /**
- * Create a standard anchor record with minimal public metadata.
+ * Create an anchor record.
  *
  * @param marker - The EXIT marker to create an anchor record for.
- * @returns An anchor record containing the hash, timestamp, exit type, and subject DID.
+ * @param options - Options. Set `minimal: false` to include subject DID and exit type.
+ * @returns A minimal or standard anchor record.
  *
  * @example
  * ```ts
- * const record = createAnchorRecord(marker);
- * // record.hash, record.timestamp, record.exitType, record.subjectDid
+ * const record = createAnchorRecord(marker); // MinimalAnchorRecord (default)
+ * const full = createAnchorRecord(marker, { minimal: false }); // AnchorRecord
  * ```
  */
-export function createAnchorRecord(marker: ExitMarker): AnchorRecord {
-  return {
+export function createAnchorRecord(marker: ExitMarker, options?: { minimal?: boolean }): MinimalAnchorRecord;
+export function createAnchorRecord(marker: ExitMarker, options: { minimal: false }): AnchorRecord;
+export function createAnchorRecord(marker: ExitMarker, options?: { minimal?: boolean }): MinimalAnchorRecord | AnchorRecord {
+  const minimal = options?.minimal ?? true;
+  const base: MinimalAnchorRecord = {
     hash: computeAnchorHash(marker),
     timestamp: marker.timestamp,
-    exitType: marker.exitType,
-    subjectDid: marker.subject,
+    specVersion: EXIT_SPEC_VERSION,
   };
+  if (!minimal) {
+    return {
+      ...base,
+      exitType: marker.exitType,
+      subjectDid: marker.subject,
+    } as AnchorRecord;
+  }
+  return base;
 }
 
 /**
@@ -106,5 +122,6 @@ export function createMinimalAnchor(marker: ExitMarker): MinimalAnchorRecord {
   return {
     hash: computeAnchorHash(marker),
     timestamp: marker.timestamp,
+    specVersion: EXIT_SPEC_VERSION,
   };
 }

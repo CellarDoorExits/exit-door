@@ -3,6 +3,7 @@
  */
 
 import { sha256 } from "@noble/hashes/sha256";
+import jcsCanon from "canonicalize";
 import {
   type ExitMarker,
   type DataIntegrityProof,
@@ -117,23 +118,19 @@ function defaultStatus(exitType: ExitType): ExitStatus {
 }
 
 /**
- * Deterministic JSON string with sorted keys (recursive).
+ * Deterministic JSON canonicalization per RFC 8785 (JCS).
+ *
+ * Uses the `canonicalize` npm package which implements the full RFC 8785 spec,
+ * including proper handling of Unicode escaping, IEEE 754 float serialization,
+ * and lexicographic key sorting at all nesting levels.
  *
  * @param obj - The value to canonicalize.
- * @returns A deterministic JSON string with lexicographically sorted keys at every level.
+ * @returns A deterministic JSON string per RFC 8785.
  */
 export function canonicalize(obj: unknown): string {
-  if (obj === null || obj === undefined) return JSON.stringify(obj);
-  if (typeof obj === "string") return JSON.stringify(obj.normalize("NFC"));
-  if (typeof obj !== "object") return JSON.stringify(obj);
-  if (Array.isArray(obj)) {
-    return "[" + obj.map((v) => canonicalize(v)).join(",") + "]";
-  }
-  const sorted = Object.keys(obj as Record<string, unknown>).sort();
-  const pairs = sorted.map(
-    (k) => `${JSON.stringify(k)}:${canonicalize((obj as Record<string, unknown>)[k])}`
-  );
-  return "{" + pairs.join(",") + "}";
+  const result = jcsCanon(obj);
+  if (result === undefined) return "null";
+  return result;
 }
 
 /**

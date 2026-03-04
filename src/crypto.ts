@@ -252,6 +252,56 @@ export function publicKeyFromP256Did(did: string): Uint8Array {
 /**
  * Detect algorithm from a did:key string based on multicodec prefix.
  */
+// ─── Algorithm Registry ──────────────────────────────────────────────────────
+
+/** Algorithm identifier type for the registry. */
+export type AlgorithmId = 'ed25519' | 'p256' | string;
+
+/** A registered signature algorithm with keygen, sign, verify, and DID helpers. */
+export interface RegisteredAlgorithm {
+  generateKeyPair(): KeyPair;
+  sign(data: Uint8Array, privateKey: Uint8Array): Uint8Array;
+  verify(data: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): boolean;
+  didFromPublicKey(publicKey: Uint8Array): string;
+  publicKeyFromDid(did: string): Uint8Array;
+}
+
+/** Registry mapping algorithm IDs to their implementations. */
+export const AlgorithmRegistry = new Map<AlgorithmId, RegisteredAlgorithm>();
+
+// Register built-in: ed25519
+AlgorithmRegistry.set('ed25519', {
+  generateKeyPair,
+  sign,
+  verify,
+  didFromPublicKey,
+  publicKeyFromDid,
+});
+
+// Register built-in: p256
+AlgorithmRegistry.set('p256', {
+  generateKeyPair: generateP256KeyPair,
+  sign: signP256,
+  verify: verifyP256,
+  didFromPublicKey: didFromP256PublicKey,
+  publicKeyFromDid: publicKeyFromP256Did,
+});
+
+/**
+ * Look up a registered algorithm by ID. Fail-closed: throws on unknown algorithms.
+ *
+ * @param id - The algorithm identifier.
+ * @returns The registered algorithm implementation.
+ * @throws {Error} If the algorithm is not registered.
+ */
+export function getAlgorithm(id: AlgorithmId): RegisteredAlgorithm {
+  const alg = AlgorithmRegistry.get(id);
+  if (!alg) {
+    throw new Error(`Unknown algorithm: "${id}". Registered: ${[...AlgorithmRegistry.keys()].join(', ')}`);
+  }
+  return alg;
+}
+
 export function algorithmFromDid(did: string): "Ed25519" | "P-256" {
   if (!did.startsWith("did:key:z")) {
     throw new Error("Invalid did:key format");

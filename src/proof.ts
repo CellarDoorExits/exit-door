@@ -10,7 +10,7 @@ import { SigningError, VerificationError } from "./errors.js";
 import type { Signer } from "./signer.js";
 import { proofTypeForAlgorithm, algorithmFromProofType } from "./signer.js";
 
-const DOMAIN_PREFIX = "exit-marker-v1.1:";
+const DOMAIN_PREFIX = "exit-marker-v1.2:";
 
 /**
  * @deprecated Use {@link signMarkerWithSigner} instead. This function hardcodes Ed25519.

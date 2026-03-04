@@ -66,13 +66,23 @@ describe("Anchor", () => {
     expect(computeAnchorHash(m1)).not.toBe(computeAnchorHash(m2));
   });
 
-  it("createAnchorRecord includes hash, timestamp, exitType, subjectDid", () => {
+  it("createAnchorRecord includes hash, timestamp, exitType, subjectDid (non-minimal)", () => {
     const marker = makeSignedMarker();
-    const record = createAnchorRecord(marker);
+    const record = createAnchorRecord(marker, { minimal: false });
     expect(record.hash).toBeTruthy();
     expect(record.timestamp).toBe(marker.timestamp);
     expect(record.exitType).toBe(marker.exitType);
     expect(record.subjectDid).toBe(marker.subject);
+  });
+
+  it("createAnchorRecord returns minimal by default", () => {
+    const marker = makeSignedMarker();
+    const record = createAnchorRecord(marker);
+    expect(record.hash).toBeTruthy();
+    expect(record.timestamp).toBe(marker.timestamp);
+    expect(record.specVersion).toBeTruthy();
+    expect((record as any).exitType).toBeUndefined();
+    expect((record as any).subjectDid).toBeUndefined();
   });
 
   it("verifyAnchorRecord returns true for matching marker", () => {
@@ -101,7 +111,7 @@ describe("Anchor", () => {
   it("createMinimalAnchor contains only hash + timestamp", () => {
     const marker = makeSignedMarker();
     const minimal = createMinimalAnchor(marker);
-    expect(Object.keys(minimal).sort()).toEqual(["hash", "timestamp"]);
+    expect(Object.keys(minimal).sort()).toEqual(["hash", "specVersion", "timestamp"]);
     expect(minimal.hash).toBeTruthy();
     expect(minimal.timestamp).toBe(marker.timestamp);
   });
