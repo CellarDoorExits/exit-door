@@ -149,7 +149,7 @@ describe("Edge Cases", () => {
   });
 
   // ─── Signing an already-signed marker ──────────────────────────────
-  it("re-signing replaces the proof (new signature)", () => {
+  it("re-signing replaces the proof (new signature)", async () => {
     const kp = generateKeyPair();
     const did = didFromPublicKey(kp.publicKey);
     const marker = createMarker({
@@ -158,6 +158,8 @@ describe("Edge Cases", () => {
       exitType: ExitType.Voluntary,
     });
     const signed1 = signMarker(marker, kp.privateKey, kp.publicKey);
+    // Ensure timestamps differ by waiting 1ms
+    await new Promise((r) => setTimeout(r, 2));
     const signed2 = signMarker(signed1, kp.privateKey, kp.publicKey);
     // Both should verify (proof is replaced, not stacked)
     expect(verifyMarker(signed1).valid).toBe(true);
