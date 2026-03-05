@@ -126,11 +126,11 @@ describe("amendment system", () => {
       // Create amendments with different timestamps by overriding created
       const a1 = await createAmendment(marker, { status: ExitStatus.Disputed }, "first", issuerSigner);
       // Small delay to ensure different timestamps
-      const a2 = await createAmendment(marker, { status: ExitStatus.Confirmed }, "second override", issuerSigner);
+      const a2 = await createAmendment(marker, { status: ExitStatus.GoodStanding }, "second override", issuerSigner);
 
       const result = applyAmendments(marker, [a2, a1]); // pass out of order
       // Should apply a1 first, then a2 (by creation time), so final = Confirmed
-      expect(result.status).toBe(ExitStatus.Confirmed);
+      expect(result.status).toBe(ExitStatus.GoodStanding);
     });
   });
 
