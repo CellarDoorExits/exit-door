@@ -107,6 +107,28 @@ marker = signMarker(marker, privateKey, publicKey);
 const result = verifyMarker(marker);
 ```
 
+**Amendments and Revocations:**
+
+```typescript
+import { createAmendment, createRevocation, resolveMarker } from "cellar-door-exit";
+
+const amendment = createAmendment(originalMarker, { reason: "Incorrect status" }, privateKey);
+const revocation = createRevocation(originalMarker, { reason: "Fraudulent" }, privateKey);
+const resolved = resolveMarker(originalMarker, [amendment, revocation]);
+```
+
+**Amendment Discovery:**
+
+```typescript
+import { discoverAmendments, createWellKnownMetadata } from "cellar-door-exit";
+
+// Discover amendments for a marker (checks marker URL → .well-known → local store)
+const amendments = await discoverAmendments(marker);
+
+// Serve amendments at .well-known/exit-amendments
+const metadata = createWellKnownMetadata([amendment1, amendment2]);
+```
+
 **Passage API** (for full EXIT + ENTRY transfers between platforms):
 
 ```typescript
@@ -151,11 +173,11 @@ Six optional modules extend the core 7-field schema:
 
 Use `createSigner({ algorithm: "P-256" })` for FIPS compliance. See the [HSM Integration Guide](./docs/HSM_INTEGRATION.md) for AWS KMS, Azure Key Vault, GCP KMS, and YubiKey.
 
-All 410 tests pass across 25 test files.
+All 456 tests pass across 28 test files.
 
 ## Links
 
-- **Spec:** [EXIT_SPEC v1.2](./EXIT_SPEC.md)
+- **Spec:** [EXIT_SPEC v1.2](./specs/EXIT_SPEC_v1.2.md)
 - **Paper:** [Cellar Door: Right of Passage](./docs/PAPER.md)
 - **Website:** [cellar-door.dev](https://cellar-door.dev)
 - **npm:** [cellar-door-exit](https://www.npmjs.com/package/cellar-door-exit)

@@ -48,7 +48,7 @@ describe("amendment system", () => {
         issuerSigner,
       );
 
-      expect(amendment.type).toBe("AmendmentMarker");
+      expect(amendment.type).toBe("MarkerAmendment");
       expect(amendment.originalMarkerId).toBe(marker.id);
       expect(amendment.amendedFields).toEqual({ status: ExitStatus.Disputed });
       expect(amendment.reason).toBe("Status was incorrect");
@@ -142,7 +142,7 @@ describe("amendment system", () => {
         issuerSigner,
       );
 
-      expect(revocation.type).toBe("RevocationMarker");
+      expect(revocation.type).toBe("MarkerRevocation");
       expect(revocation.targetMarkerId).toBe("urn:exit:test123");
       expect(revocation.reason).toBe("Marker issued in error");
       expect(revocation.revocationId).toMatch(/^[0-9a-f]{64}$/);
