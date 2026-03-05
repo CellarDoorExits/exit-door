@@ -206,7 +206,11 @@ export function generateP256KeyPair(): KeyPair {
  */
 export function signP256(data: Uint8Array, privateKey: Uint8Array): Uint8Array {
   const hash = sha256(data);
-  return p256.sign(hash, privateKey);
+  const sig = p256.sign(hash, privateKey);
+  // PCR-01: Ensure we always return a plain Uint8Array of compact r||s bytes (64 bytes).
+  // noble/curves v1.x returns Uint8Array directly; future versions may return
+  // a Signature object — guard against both by copying to a fresh Uint8Array.
+  return Uint8Array.from(sig);
 }
 
 /**

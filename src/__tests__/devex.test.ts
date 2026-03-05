@@ -117,8 +117,8 @@ describe("generateIdentity", () => {
 });
 
 describe("quickExit", () => {
-  it("produces a signed valid marker", () => {
-    const { marker, identity } = quickExit("did:web:platform.example");
+  it("produces a signed valid marker", async () => {
+    const { marker, identity } = await quickExit("did:web:platform.example");
     expect(marker.origin).toBe("did:web:platform.example");
     expect(marker.subject).toBe(identity.did);
     expect(marker.exitType).toBe(ExitType.Voluntary);
@@ -128,8 +128,8 @@ describe("quickExit", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("accepts options overrides", () => {
-    const { marker } = quickExit("did:web:example.com", {
+  it("accepts options overrides", async () => {
+    const { marker } = await quickExit("did:web:example.com", {
       exitType: ExitType.Emergency,
       emergencyJustification: "System dying",
     });
@@ -139,8 +139,8 @@ describe("quickExit", () => {
 });
 
 describe("quickVerify", () => {
-  it("verifies valid marker JSON", () => {
-    const { marker } = quickExit("did:web:test.example");
+  it("verifies valid marker JSON", async () => {
+    const { marker } = await quickExit("did:web:test.example");
     const json = toJSON(marker);
     const result = quickVerify(json);
     expect(result.valid).toBe(true);
@@ -156,8 +156,8 @@ describe("quickVerify", () => {
 });
 
 describe("fromJSON / toJSON", () => {
-  it("round-trips a marker", () => {
-    const { marker } = quickExit("did:web:roundtrip.example");
+  it("round-trips a marker", async () => {
+    const { marker } = await quickExit("did:web:roundtrip.example");
     const json = toJSON(marker);
     const parsed = fromJSON(json);
 
@@ -169,8 +169,8 @@ describe("fromJSON / toJSON", () => {
     expect(parsed.proof.proofValue).toBe(marker.proof.proofValue);
   });
 
-  it("toJSON produces pretty-printed output", () => {
-    const { marker } = quickExit("did:web:pretty.example");
+  it("toJSON produces pretty-printed output", async () => {
+    const { marker } = await quickExit("did:web:pretty.example");
     const json = toJSON(marker);
     expect(json).toContain("\n");
     expect(json).toContain("  ");
