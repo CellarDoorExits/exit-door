@@ -103,7 +103,7 @@ describe("departAndVerify", () => {
 
     expect(result.valid).toBe(true);
     expect(result.signatureValid).toBe(true);
-    expect(result.trustLevel).toBe("medium"); // no TSA
+    expect(result.trustLevel).toBe("informational"); // no TSA
     expect(result.anchorHash).toMatch(/^[0-9a-f]{64}$/);
     expect(result.reasons.length).toBeGreaterThan(0);
   });
@@ -115,7 +115,7 @@ describe("departAndVerify", () => {
 
     expect(result.valid).toBe(true);
     expect(result.signatureValid).toBe(true);
-    expect(result.trustLevel).toBe("medium");
+    expect(result.trustLevel).toBe("informational");
   });
 
   it("rejects invalid JSON", async () => {
@@ -155,6 +155,6 @@ describe("departAndVerify", () => {
 
     expect(verify.valid).toBe(true);
     expect(verify.anchorHash).toBe(exit.anchorHash);
-    expect(verify.trustLevel).toBe("medium");
+    expect(verify.trustLevel).toBe("informational");
   });
 });

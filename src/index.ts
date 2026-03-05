@@ -407,3 +407,15 @@ export {
   type SpanOptions,
   type TelemetryConfig,
 } from "./telemetry.js";
+
+// Amendment/Revocation Discovery (Section 6.3.1)
+export {
+  discoverAmendments,
+  createWellKnownMetadata,
+  createAmendmentQueryHandler,
+  InMemoryAmendmentStore,
+  type AmendmentDiscoveryResponse,
+  type WellKnownExitAmendments,
+  type DiscoveryOptions,
+  type AmendmentStore,
+} from "./discovery.js";

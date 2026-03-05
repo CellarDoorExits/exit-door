@@ -151,7 +151,7 @@ Six optional modules extend the core 7-field schema:
 
 Use `createSigner({ algorithm: "P-256" })` for FIPS compliance. See the [HSM Integration Guide](./docs/HSM_INTEGRATION.md) for AWS KMS, Azure Key Vault, GCP KMS, and YubiKey.
 
-All 410 tests pass across 25 test files.
+All 443 tests pass across 27 test files.
 
 ## Links
 

@@ -62,7 +62,7 @@ function makeTestMarker(): { marker: ExitMarker; privateKey: Uint8Array; publicK
   const did = didFromPublicKey(publicKey);
   const marker: ExitMarker = {
     "@context": "https://cellar-door.dev/exit/v1",
-    specVersion: "1.1",
+    specVersion: "1.2",
     id: `urn:exit:tel-test-${Date.now()}`,
     subject: did,
     origin: "https://platform.example.com",

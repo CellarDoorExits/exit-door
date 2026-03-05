@@ -16,7 +16,7 @@ function makeBaseMarker(): ExitMarker {
   const did = didFromPublicKey(publicKey);
   const marker: ExitMarker = {
     "@context": "https://cellar-door.dev/exit/v1",
-    specVersion: "1.1",
+    specVersion: "1.2",
     id: `urn:exit:test-${Date.now()}`,
     subject: did,
     origin: "https://platform.example.com",
@@ -266,7 +266,7 @@ describe("Trust Enhancers (Conduit-Only)", () => {
       const did = didFromPublicKey(publicKey);
       const marker: ExitMarker = {
         "@context": "https://cellar-door.dev/exit/v1",
-        specVersion: "1.1",
+        specVersion: "1.2",
         id: `urn:exit:enhanced-${Date.now()}`,
         subject: did,
         origin: "https://platform.example.com",
