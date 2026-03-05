@@ -178,7 +178,7 @@ All 456 tests pass across 28 test files.
 ## Links
 
 - **Spec:** [EXIT_SPEC v1.2](./specs/EXIT_SPEC_v1.2.md)
-- **Paper:** [Cellar Door: Right of Passage](./docs/PAPER.md)
+- **Paper:** [Cellar Door: Right of Passage](https://cellar-door.dev/paper/)
 - **Website:** [cellar-door.dev](https://cellar-door.dev)
 - **npm:** [cellar-door-exit](https://www.npmjs.com/package/cellar-door-exit)
 - **Getting Started:** [5-minute guide](./docs/GETTING_STARTED.md)
