@@ -266,7 +266,7 @@ export async function anchorWithTSA(
 }
 
 /**
- * **⚠️ STRUCTURAL CHECK ONLY — NOT CRYPTOGRAPHIC VERIFICATION.**
+ * **⚠️ STRUCTURAL CHECK ONLY — does NOT verify cryptographic signature.**
  *
  * Checks that a TSA receipt structurally contains the expected hash,
  * has valid ASN.1 framing, and a parseable timestamp. This function
@@ -277,6 +277,8 @@ export async function anchorWithTSA(
  * cryptographic verification, use `openssl ts -verify` with the TSA's
  * certificate chain, or a proper ASN.1/PKCS library.
  *
+ * Trust level: `informational` only — not suitable for elevating trust.
+ *
  * @param receipt - The TSAReceipt to check.
  * @param hash - The expected hex-encoded SHA-256 hash.
  * @returns `true` if the receipt structurally matches the hash.
@@ -284,10 +286,10 @@ export async function anchorWithTSA(
  * @example
  * ```ts
  * // Structural plausibility check only — not proof of authenticity
- * const plausible = await verifyTSAReceipt(receipt, expectedHash);
+ * const plausible = await checkTSAReceiptStructure(receipt, expectedHash);
  * ```
  */
-export async function verifyTSAReceipt(
+export async function checkTSAReceiptStructure(
   receipt: TSAReceipt,
   hash: string
 ): Promise<boolean> {

@@ -1,9 +1,9 @@
-# 𓉸 EXIT Protocol Specification v1.1
+# 𓉸 EXIT Protocol Specification v1.2
 
 **Status:** Draft
-**Date:** 2026-02-24
+**Date:** 2026-03-04
 **Authors:** Cellar Door Contributors
-**Supersedes:** EXIT_SPEC_v1.0-draft
+**Supersedes:** EXIT_SPEC_v1.1
 **License:** Apache 2.0
 **Symbol:** 𓉸 — *There's always a door...*
 
@@ -15,13 +15,15 @@ The EXIT protocol defines a verifiable, portable, cryptographically signed marke
 
 EXIT is one half of the **Passage Protocol** 𓉸 — together with the ENTRY protocol, they provide complete **Proof of Passage** (PoP): cryptographic proof of entity movement between systems. EXIT records departure (➜𓉸); ENTRY records arrival (𓉸➜).
 
-v1.1 extends the core specification with trust mechanisms (confidence scoring, status confirmation, tenure attestation, commit-reveal), ethics guardrails (coercion detection, weaponization detection, laundering detection, right of reply, sunset policies), KERI-compatible key management (pre-rotation, key event logs, key compromise recovery), privacy primitives (encryption, redaction, minimal disclosure), chain anchoring (anchor records, Merkle batch operations), RFC 3161 timestamp anchoring, git-backed ledger anchoring, visual hash representations, full-service convenience API, and interoperability patterns (transport serialization, middleware, lifecycle hooks).
+v1.2 introduces algorithm agility (§5), marker amendment and revocation (§6), FCRA compliance guidance (§11), strengthened data protection (§10), anti-retaliation protections (§8.7), and reframes the trust model as informational (§7). It also updates canonicalization to RFC 8785 JCS, replaces raw SHA-256 KDF with HKDF-SHA-256, and adds AES-256-GCM as a FIPS-compliant encryption alternative.
 
 ---
 
 ## 1. Introduction
 
 When an entity departs a digital system — whether an AI agent leaving a platform, a participant exiting a DAO, or a service migrating between providers — no standardized mechanism exists to create a verifiable record of that departure. EXIT fills this gap.
+
+EXIT is a foundational protocol layer designed to compose with higher-level reputation, insurance, and trust protocols. It is intentionally minimal — EXIT records departures. It does not assign blame, compute trust scores, or manage reputation. These are responsibilities of higher-layer protocols that consume EXIT markers as inputs.
 
 An EXIT marker is a JSON-LD document, approximately 300–500 bytes in its core form, that records: who departed, from where, when, how, and under what standing. The marker is cryptographically signed by the departing subject and optionally co-signed by the origin system or witnesses.
 
@@ -33,33 +35,27 @@ An EXIT marker is a JSON-LD document, approximately 300–500 bytes in its core 
 - **Portable:** Markers are self-contained and offline-verifiable
 - **Non-custodial:** No central registry is required
 - **Non-weaponizable:** Markers MUST NOT be used as blacklists (§8.6)
+- **Composable:** EXIT composes with higher-level protocols for reputation, trust scoring, insurance, and governance
 
 ### 1.2 Relationship to Other Standards
 
 EXIT markers can be wrapped in W3C Verifiable Credentials (Decision D-001) but are not dependent on the VC ecosystem. The standalone JSON-LD format is the canonical representation.
 
-### 1.3 Changes from v1.0
+### 1.3 Changes from v1.1
 
 | Area | Change |
 |---|---|
-| Schema | Added mandatory `specVersion` field (MUST be `"1.1"`) |
-| ExitTypes | Added `platform_shutdown`, `directed`, `constructive`, `acquisition` (8 total) |
-| Fields | Added `completenessAttestation`, `sequenceNumber` optional fields |
-| Dispute | Added `disputeExpiry`, `resolution`, `arbiterDid` sub-fields |
-| Structures | Added formal `ExitIntent` and `SuccessorAmendment` structures |
-| Trust | Added StatusConfirmation, TenureAttestation, ExitCommitment, ConfidenceScore |
-| Ethics | Added coercion detection, weaponization detection, laundering detection, right of reply, sunset policies, anti-weaponization clause |
-| Key Management | Added KERI stubs, pre-rotation commitments, key event logs, key compromise recovery |
-| Privacy | Added XChaCha20-Poly1305 encryption, field-level redaction, minimal disclosure |
-| Anchoring | Added anchor records, minimal anchors, Merkle batch operations |
-| Timestamping | Added RFC 3161 TSA timestamp anchoring (§11.3) |
-| Git Ledger | Added git-backed append-only ledger anchoring (§11.4) |
-| Visual | Added visual hash door representations — ASCII, SVG, color palette, short hash (§12.6) |
-| Convenience | Added full-service wrapper API — `departAndAnchor()`, `departAndVerify()` (§12.7) |
-| Interop | Added transport serialization, Express-style middleware, lifecycle hooks |
-| Terminology | "Transfer" → "Passage" throughout; added 𓉸 brand symbol |
-| Key Custody | Added §19 Key Custody Considerations |
-| Checkpoints | Added §20 Checkpoint & Dead-Man Patterns |
+| Framing | EXIT reframed as foundational protocol layer (§1) |
+| Schema | `specVersion` MUST be `"1.2"` |
+| Algorithms | New §5 Algorithm Registry with extensible algorithm identifiers; P-256 elevated to co-default |
+| Lifecycle | New §6 Marker Amendment and Revocation |
+| Trust Model | §7 reframed as "Reference Trust Model" — informational, not normative |
+| Anti-Retaliation | New §8.7 with protected activity enumeration |
+| TSA | §9 demoted to informational timestamp evidence |
+| Data Protection | §10 major revision: data classification, lawful basis, minimal anchoring, three-tier erasure, DPIA |
+| FCRA | New §11 FCRA Considerations |
+| Canonicalization | Updated to RFC 8785 JCS; domain separation prefix `exit-marker-v1.2:` |
+| Privacy | HKDF-SHA-256 replaces raw SHA-256 KDF; AES-256-GCM added as FIPS alternative |
 
 ---
 
@@ -77,8 +73,10 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 - **Passage:** The complete transit of an entity between systems, comprising EXIT (departure) and ENTRY (arrival). Formerly "transfer."
 - **Proof of Passage (PoP):** Cryptographic proof that an entity transited between systems, consisting of a verified EXIT+ENTRY marker pair.
 - **Passage Protocol:** The combined EXIT + ENTRY specification. *Two ceremonies. One protocol.*
-- **Confidence Score:** A computed trust metric aggregating attestation quality, tenure, lineage, and commit-reveal evidence.
+- **Confidence Score:** A computed trust metric aggregating attestation quality, tenure, lineage, and commit-reveal evidence. Informational only (see Appendix B).
 - **Pre-Rotation:** A KERI concept where the hash of the next public key is committed before it is needed.
+- **Amendment:** A signed correction to an existing marker's fields (§6.1).
+- **Revocation:** A permanent, irreversible invalidation of a marker (§6.2).
 - **𓉸:** The Cellar Door brand symbol (Egyptian hieroglyph door, U+13268). ➜𓉸 denotes EXIT; 𓉸➜ denotes ENTRY.
 
 ---
@@ -92,7 +90,7 @@ Every valid EXIT marker MUST contain the following fields.
 | # | Field | Type | Description |
 |---|---|---|---|
 | 1 | `@context` | string | MUST be `"https://cellar-door.dev/exit/v1"` |
-| 2 | `specVersion` | string | MUST be `"1.1"` for markers conforming to this specification |
+| 2 | `specVersion` | string | MUST be `"1.2"` for markers conforming to this specification |
 | 3 | `id` | string (URI) | Globally unique identifier. SHOULD be content-addressed (`urn:exit:{sha256}`) |
 | 4 | `subject` | string (DID/URI) | Who is exiting. MUST be a valid DID or agent URI |
 | 5 | `origin` | string (URI) | What is being exited. MUST be a URI identifying the origin system |
@@ -121,7 +119,7 @@ When present, the `legalHold` object MUST contain:
 | `dateIssued` | string (ISO 8601) | When the hold was issued |
 | `acknowledged` | boolean | Whether the subject has acknowledged the hold |
 
-### 3.4 Extended Fields (v1.1)
+### 3.4 Extended Fields
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -158,27 +156,14 @@ The `proof` object MUST contain:
 
 | Field | Type | Description |
 |---|---|---|
-| `type` | string | Signature algorithm. MUST be one of the supported types (see §3.5.1) |
+| `type` | string | Signature algorithm identifier. MUST be a registered algorithm (see §5) |
 | `created` | string (ISO 8601) | When the proof was created |
 | `verificationMethod` | string | DID or key URI for verification |
 | `proofValue` | string | Base64-encoded signature |
 
-The data signed MUST be the canonical JSON form (§13.1) of the marker excluding the `proof` and `id` fields. Implementations MUST prepend the domain separation string `exit-marker-v1.1:` to the canonical marker content before signing or verifying. This prevents cross-protocol signature replay attacks.
+The data signed MUST be the canonical JSON form (§13.1) of the marker excluding the `proof` and `id` fields. Implementations MUST prepend the domain separation string `exit-marker-v1.2:` to the canonical marker content before signing or verifying. This prevents cross-protocol signature replay attacks.
 
-**Version Migration:** The domain separation prefix is versioned to prevent cross-version replay. When a new specification version introduces a new prefix, verifiers MUST accept signatures using both the current and immediately prior version prefix for a transition period of at least 365 days from the new version's publication date. After the transition period, verifiers MAY reject the prior prefix. Signers MUST always use the current version's prefix.
-
-#### 3.5.1 Supported Signature Algorithms
-
-| `proof.type` | Algorithm | Key Size | FIPS 140-2/3 | Notes |
-|---|---|---|---|---|
-| `"Ed25519Signature2020"` | Ed25519 (RFC 8032) | 32 bytes | ❌ Not approved | Default. Fast, compact. Widely used in DID/VC ecosystem. |
-| `"EcdsaP256Signature2019"` | ECDSA P-256 (FIPS 186-5) | 33 bytes (compressed) | ✅ Approved | Use when FIPS compliance is required. NIST curve secp256r1. |
-
-Implementations MUST support `Ed25519Signature2020`. Implementations SHOULD support `EcdsaP256Signature2019` for interoperability with FIPS-regulated environments.
-
-Verifiers MUST accept both algorithm types. Signers MAY use either algorithm. The `verificationMethod` field encodes the algorithm via the DID multicodec prefix (Ed25519: `0xed01`, P-256: `0x8024`).
-
-Additional algorithms MAY be added in future spec versions. Verifiers encountering an unknown `proof.type` MUST reject the marker with an "unsupported algorithm" error.
+**Version Migration:** The domain separation prefix is versioned to prevent cross-version replay. Verifiers MUST accept signatures using both the `exit-marker-v1.2:` and `exit-marker-v1.1:` prefixes for a transition period of at least 365 days from the v1.2 publication date. After the transition period, verifiers MAY reject the `exit-marker-v1.1:` prefix. Signers MUST always use the `exit-marker-v1.2:` prefix.
 
 ### 3.6 Exit Types
 
@@ -205,7 +190,7 @@ The `acquisition` type is used when a platform merger or acquisition triggers de
 
 ### 3.7 Content-Addressed Identifiers
 
-The `id` field SHOULD be content-addressed: `urn:exit:{sha256}` where the SHA-256 hash is computed over the canonical JSON form of the marker excluding `proof` and `id`. This ensures:
+The `id` field SHOULD be content-addressed: `urn:exit:{sha256}` where the SHA-256 hash is computed over the canonical JSON form (RFC 8785 JCS, §13.1) of the marker excluding `proof` and `id`. This ensures:
 
 - Different markers MUST produce different IDs (collision resistance)
 - The same marker content MUST always produce the same ID (determinism)
@@ -255,6 +240,8 @@ A `SuccessorAmendment` allows a subject to designate a successor after the origi
 - The `exitMarkerId` MUST reference a valid, finalized EXIT marker
 - Multiple amendments MAY exist; the latest by `timestamp` takes precedence
 - Verifiers SHOULD verify that the amendment signer matches the original marker subject
+
+> **Note:** For general-purpose marker amendments (correcting any field, not just successors), see §6.1.
 
 ### 4.2 Module B: State Snapshot Reference
 
@@ -330,7 +317,7 @@ Purpose: Human-readable context.
 | `tags` | array of strings | MAY | Domain-specific labels |
 | `locale` | string | MAY | Language code |
 
-Module E content is personal data under GDPR. Implementers MUST handle accordingly.
+Module E content is personal data under GDPR. Implementers MUST handle accordingly (§10).
 
 ### 4.6 Module F: Cross-Domain Anchoring
 
@@ -341,150 +328,146 @@ Purpose: Anchor markers to external chains or registries.
 | `anchors` | array of ChainAnchor | MAY | On-chain anchoring points |
 | `registryEntries` | array of strings | MAY | External registry entries |
 
-**WARNING:** On-chain anchoring creates indelible records. This is fundamentally incompatible with GDPR right to erasure. Implementers MUST conduct a Data Protection Impact Assessment before using Module F with personal data.
+**WARNING:** On-chain anchoring creates indelible records. This is fundamentally incompatible with GDPR right to erasure (see §10.4 Tier 3). Implementers MUST conduct a Data Protection Impact Assessment before using Module F with personal data.
 
 ---
 
-## 5. Ceremony State Machine
+## 5. Algorithm Registry (v1.2)
 
-### 5.1 States
+EXIT employs an extensible algorithm registry to support algorithm agility. This mechanism allows future algorithm changes without breaking spec revisions.
 
-| State | Description |
+### 5.1 Registered Algorithms
+
+| Algorithm Identifier | `proof.type` | Algorithm | Key Size | FIPS 140-2/3 | Status |
+|---|---|---|---|---|---|
+| `exit-ed25519-v1` | `"Ed25519Signature2020"` | Ed25519 (RFC 8032) | 32 bytes | ❌ Not approved | Co-default |
+| `exit-p256-v1` | `"EcdsaP256Signature2019"` | ECDSA P-256 (FIPS 186-5) | 33 bytes (compressed) | ✅ Approved | Co-default |
+| `exit-ml-dsa-v1` | *reserved* | ML-DSA (FIPS 204) | *TBD* | ✅ Approved | Reserved (post-quantum) |
+
+Implementations MUST support both `exit-ed25519-v1` and `exit-p256-v1`. Both are co-default algorithms — signers MAY use either.
+
+The `verificationMethod` field encodes the algorithm via the DID multicodec prefix (Ed25519: `0xed01`, P-256: `0x8024`).
+
+New algorithms are added via spec amendment, not new spec version. The `exit-ml-dsa-v1` identifier is reserved for future post-quantum migration; implementations MUST NOT use it until a spec amendment formally activates it.
+
+**Fail-Closed Requirement:** Verifiers MUST reject markers with unknown `proof.type` values or unregistered algorithm identifiers. Accepting unknown algorithms would undermine the security model.
+
+### 5.2 FIPS-Compliant Deployment Profile
+
+Deployments requiring FIPS 140-2/3 compliance MUST use the following profile:
+
+| Component | Algorithm |
 |---|---|
-| `alive` | Active participant. No exit in progress |
-| `intent` | Subject has declared intent to exit |
-| `snapshot` | State reference captured |
-| `open` | Challenge window is open |
-| `contested` | A challenge has been filed |
-| `final` | EXIT marker created and signed |
-| `departed` | Terminal. Entity has left. No undo |
-
-### 5.2 Ceremony Paths
-
-**Full cooperative path:**
-```
-ALIVE → INTENT → SNAPSHOT → OPEN → FINAL → DEPARTED
-```
-
-**Unilateral path:**
-```
-ALIVE → INTENT → SNAPSHOT → FINAL → DEPARTED
-```
-
-**Emergency path:**
-```
-ALIVE → FINAL → DEPARTED
-```
-
-### 5.3 State Transition Rules
-
-- ALIVE → INTENT: Subject declares intent. MUST be signed by subject.
-- INTENT → SNAPSHOT: State reference captured. MAY be automatic.
-- SNAPSHOT → OPEN: Challenge window opened. REQUIRES origin cooperation.
-- SNAPSHOT → FINAL: Unilateral finalization (skips challenge window).
-- OPEN → CONTESTED: A dispute is filed during the challenge window.
-- OPEN → FINAL: Challenge window closes without contest.
-- CONTESTED → FINAL: Dispute recorded but does not block exit (D-006).
-- FINAL → DEPARTED: Terminal transition. MUST NOT be reversed.
-- ALIVE → FINAL: Emergency path only. REQUIRES `exitType: emergency` and `emergencyJustification`.
-
-### 5.4 Invariants
-
-- `DEPARTED` is terminal. No transitions from `DEPARTED`.
-- States MUST only move forward. Backward transitions MUST NOT occur (except emergency shortcut ALIVE → FINAL).
-- Disputes MUST NOT block transitions (D-006). Disputes change metadata only.
-- Subject signature MUST be present at `FINAL`.
-- Emergency path MUST include `emergencyJustification`.
-
-### 5.5 Commit-Reveal Integration (v1.1)
-
-When using the commit-reveal mechanism (§7.2):
-
-1. Subject SHOULD create an `ExitCommitment` before or at the `INTENT` state
-2. The commitment MUST be published (timestamped) before the intent is revealed
-3. The reveal MUST NOT occur before `revealAfter`
-4. Verifiers SHOULD check that the commitment predates any retaliatory origin action
-
-### 5.6 Exit Intent Structure
-
-The `ExitIntent` is a formal artifact produced at the `INTENT` ceremony state.
-
-**ExitIntent Structure:**
-
-| Field | Type | Description |
-|---|---|---|
-| `subject` | string (DID/URI) | Who intends to exit |
-| `origin` | string (URI) | What is being exited |
-| `timestamp` | string (ISO 8601) | When the intent was declared |
-| `exitType` | ExitType | Anticipated nature of departure |
-| `reason` | string | OPTIONAL. Why the subject intends to exit |
-| `proof` | DataIntegrityProof | Signed by the subject |
+| Signing | ECDSA P-256 (`exit-p256-v1`) |
+| Encryption | AES-256-GCM (§10.1) |
+| Key Derivation | HKDF-SHA-256 (§10.1) |
+| Hashing | SHA-256 |
 
 **Normative Requirements:**
 
-- The `ExitIntent` MUST be signed by the subject
-- The `subject` field MUST match the eventual EXIT marker's `subject`
-- The `exitType` in the intent MAY differ from the final marker's `exitType` (circumstances may change)
-- Implementations SHOULD preserve the `ExitIntent` for audit purposes
+- FIPS-compliant deployments MUST use `exit-p256-v1` for all marker signatures
+- FIPS-compliant deployments MUST use AES-256-GCM for marker encryption (§10.1)
+- FIPS-compliant deployments SHOULD use FIPS-validated cryptographic modules
+
+### 5.3 Cloud KMS Integration
+
+Implementations MAY delegate signing operations to cloud Key Management Services. The following reference architecture applies:
+
+| Provider | Key Type | Signing API | Notes |
+|---|---|---|---|
+| AWS KMS | `ECC_NIST_P256` | `Sign` (ECDSA) | Returns DER-encoded signature; convert to raw (r‖s) for `proofValue` |
+| Azure Key Vault | `EC` (P-256) | `Sign` (ES256) | Returns raw (r‖s) |
+| GCP Cloud KMS | `EC_SIGN_P256_SHA256` | `AsymmetricSign` | Returns DER-encoded signature |
+
+**Normative Requirements:**
+
+- KMS-backed signers MUST produce signatures compatible with the registered algorithm's verification procedure
+- The `verificationMethod` MUST reference the public key corresponding to the KMS-held private key
+- Implementations MUST handle DER ↔ raw signature format conversion as required by the provider
 
 ---
 
-## 6. Verification Requirements
+## 6. Marker Lifecycle (v1.2)
 
-### 6.1 Structural Verification
+EXIT markers are immutable once signed. However, real-world conditions require the ability to correct inaccurate markers and invalidate fraudulent ones. This section defines two lifecycle documents — amendments and revocations — that compose with markers without breaking content-addressing.
 
-A verifier MUST check:
+### 6.1 MarkerAmendment
 
-1. `@context` equals `"https://cellar-door.dev/exit/v1"`
-2. `specVersion` equals `"1.1"`
-3. All 8 mandatory fields are present and non-empty
-4. `selfAttested` field is present (boolean)
-5. `timestamp` is valid ISO 8601 UTC
-6. `exitType` is one of the 8 defined enum values: `voluntary`, `forced`, `emergency`, `keyCompromise`, `platform_shutdown`, `directed`, `constructive`, `acquisition`
-7. `status` is one of the defined enum values
-8. `proof` contains `type`, `created`, `verificationMethod`, and `proofValue`
-9. If `exitType` is `emergency`, `emergencyJustification` MUST be present and non-empty
-10. If `legalHold` is present, all required sub-fields MUST be present and valid
-11. If `sunsetDate` is present, it MUST be valid ISO 8601
-12. If `coercionLabel` is present, it MUST be one of the defined enum values
-13. If `preRotationCommitment` is present, it MUST be a valid hex string
-14. If `sequenceNumber` is present, it MUST be a non-negative integer
-15. If `completenessAttestation` is present, it MUST contain `attestedAt`, `markerCount`, and `signature`
+A `MarkerAmendment` corrects specific fields of an existing marker. Amendments do not modify the original marker; they are separate signed documents that reference it.
 
-### 6.2 Cryptographic Verification
+**MarkerAmendment Structure:**
 
-A verifier MUST:
+| Field | Type | Description |
+|---|---|---|
+| `@context` | string | MUST be `"https://cellar-door.dev/exit/v1"` |
+| `type` | string | MUST be `"MarkerAmendment"` |
+| `amendmentId` | string (URI) | Content-addressed identifier: `urn:exit:amendment:{sha256}` |
+| `originalMarkerId` | string (URI) | The `id` of the marker being amended |
+| `amendedFields` | object | Partial marker containing only the corrected field values |
+| `reason` | string | Human-readable explanation for the amendment |
+| `timestamp` | string (ISO 8601) | When the amendment was created. MUST be UTC |
+| `proof` | DataIntegrityProof | Signed by the original marker's issuer (subject or origin) |
 
-1. Resolve the `proof.verificationMethod` to a public key
-2. Verify the signature in `proof.proofValue` against the canonical form of the marker content (excluding `proof`)
-3. Verify that the signing key corresponds to the `subject` DID
+**Normative Requirements:**
 
-A verifier SHOULD:
+- The `proof` MUST be signed by a key authorized to amend the marker: the original subject's key, or the origin's key if the origin co-signed the original marker
+- The `originalMarkerId` MUST reference a valid, finalized EXIT marker
+- Amendment chains MUST be flat — each amendment references the original marker, not a previous amendment
+- Multiple amendments MAY exist for the same marker; when fields conflict, the amendment with the latest `timestamp` takes precedence for that field
+- Verifiers MUST check for amendments before relying on a marker's field values
+- The `amendmentId` MUST be content-addressed: `urn:exit:amendment:` + SHA-256 of the canonical form of the amendment excluding `amendmentId` and `proof`
 
-1. Check for `keyCompromise` markers from the same subject
-2. Verify the `id` matches the content-addressed hash
-3. If `preRotationCommitment` is present, record it for future key rotation verification
+### 6.2 MarkerRevocation
 
-### 6.3 Trust Verification (v1.1)
+A `MarkerRevocation` permanently invalidates a marker. Revocation is irreversible — a revoked marker cannot be un-revoked.
 
-A verifier SHOULD (based on context):
+**MarkerRevocation Structure:**
 
-1. Compute the `StatusConfirmation` level (§7.1) and weight the marker accordingly
-2. Verify any `TenureAttestation` signatures (§7.3)
-3. Compute a `ConfidenceScore` (§7.4) using all available signals
-4. Check for commit-reveal evidence (§7.2) when evaluating temporal claims
-5. Evaluate `selfAttested` — if `true`, apply self-attestation trust level
-6. Check for Module C `originStatus` and evaluate origin trust
-7. Verify lineage chain depth and continuity proof strength (Module A)
-8. Cross-reference the `origin` against known platform registries
+| Field | Type | Description |
+|---|---|---|
+| `@context` | string | MUST be `"https://cellar-door.dev/exit/v1"` |
+| `type` | string | MUST be `"MarkerRevocation"` |
+| `revocationId` | string (URI) | Content-addressed identifier: `urn:exit:revocation:{sha256}` |
+| `targetMarkerId` | string (URI) | The `id` of the marker being revoked |
+| `reason` | string | Human-readable explanation for the revocation |
+| `timestamp` | string (ISO 8601) | When the revocation was created. MUST be UTC |
+| `proof` | DataIntegrityProof | Signed by the original marker's subject OR origin |
+
+**Normative Requirements:**
+
+- The `proof` MUST be signed by the original marker's subject key or, if the origin co-signed the original marker, the origin's key
+- Revocation is permanent and irreversible — a revoked marker MUST NOT be un-revoked
+- Revoked markers MUST NOT be relied upon for admission decisions, reputation scoring, or any trust-bearing purpose
+- Verifiers MUST check for revocations before relying on a marker
+- The `revocationId` MUST be content-addressed: `urn:exit:revocation:` + SHA-256 of the canonical form excluding `revocationId` and `proof`
+
+### 6.3 Discovery
+
+Verifiers need a mechanism to discover amendments and revocations for a given marker.
+
+**Discovery Models:**
+
+| Model | Description | Trust Properties |
+|---|---|---|
+| **Bulletin board** | Amendments and revocations stored alongside markers in the same storage system | Simple; requires trusted storage |
+| **Content-addressed linking** | Amendment/revocation IDs are derivable from the original marker ID + amendment content | Enables distributed discovery |
+| **Registry query** | A registry endpoint accepts a marker ID and returns known amendments/revocations | Convenient; introduces a trust dependency |
+
+**Normative Requirements:**
+
+- Implementations MUST provide a mechanism for verifiers to discover amendments and revocations for a given marker
+- Verifiers that cannot check for amendments or revocations (e.g., offline verification) MUST note this limitation in their verification output
+- Storage systems SHOULD index amendments and revocations by `originalMarkerId` / `targetMarkerId` for efficient lookup
 
 ---
 
-## 7. Trust Mechanisms (v1.1)
+## 7. Reference Trust Model (Informational)
+
+> **Note:** This section is **informational**, not normative. It describes one possible approach to trust scoring that higher-layer protocols MAY adopt. EXIT does not prescribe a trust model — it provides departure records that trust protocols consume.
 
 ### 7.1 Status Confirmation
 
-Self-attested status is cheap talk — any agent can claim `good_standing` regardless of truth (the Akerlof "lemons" problem). To address this, v1.1 introduces graduated status confirmation levels.
+Self-attested status is cheap talk — any agent can claim `good_standing` regardless of truth (the Akerlof "lemons" problem). To address this, EXIT defines graduated status confirmation levels as a reference framework.
 
 **StatusConfirmation Levels:**
 
@@ -556,48 +539,13 @@ Tenure is a costly signal — it cannot be faked without actual time investment.
 
 - Tenure attestations MUST be signed by the attesting party
 - Mutually attested tenure (both subject and origin attest) SHOULD be weighted higher than single-party attestation
-- Verifiers SHOULD apply a logarithmic trust weight: `weight = min(1, log₂(days + 1) / log₂(731))`
-- Self-attested tenure without origin corroboration SHOULD receive 50% weight
+- Self-attested tenure without origin corroboration SHOULD receive reduced weight
 
-### 7.4 Confidence Scoring
-
-A composite trust metric aggregating all available signals. This is a **recommendation to verifiers**, not a protocol-level enforcement.
-
-**Scoring Model:**
-
-```
-confidence = status_weight(confirmation_level)     [0.0 – 0.4]
-           + tenure_weight(days, mutual)            [0.0 – 0.3]
-           + lineage_weight(chain_depth)            [0.0 – 0.15]
-           + commit_reveal_bonus(present)           [0.0 – 0.15]
-```
-
-**Status Weights:**
-
-| Confirmation | Weight |
-|---|---|
-| `self_only` | 0.05 |
-| `origin_only` | 0.20 |
-| `mutual` | 0.40 |
-| `witnessed` | 0.40 |
-| `disputed_by_origin` | 0.00 |
-| `disputed_by_subject` | 0.10 |
-
-**Confidence Levels:**
-
-| Score Range | Level |
-|---|---|
-| < 0.1 | `none` |
-| 0.1 – 0.3 | `low` |
-| 0.3 – 0.5 | `moderate` |
-| 0.5 – 0.75 | `high` |
-| ≥ 0.75 | `very_high` |
-
-Implementations MAY use different scoring models. The model above is RECOMMENDED.
+> **Note:** For a reference confidence scoring model that incorporates tenure, status confirmation, lineage, and commit-reveal signals, see Appendix B.
 
 ---
 
-## 8. Ethics Guardrails (v1.1)
+## 8. Ethics Guardrails
 
 EXIT markers can be misused. The following guardrails provide heuristic detection and structural protections.
 
@@ -704,7 +652,23 @@ All markers MUST include an `expires` field. If not specified by the issuer, imp
 
 This clause is **normative**. Implementations that violate it are non-compliant.
 
-### 8.7 Ethical Compliance Validation
+### 8.7 Anti-Retaliation (v1.2)
+
+Origin platforms MUST NOT issue forced-exit markers in retaliation for any of the following protected activities:
+
+1. **Vulnerability reporting** — Reporting security vulnerabilities, bugs, or safety concerns
+2. **Dispute filing** — Filing or participating in a dispute under Module C
+3. **Communication with other agents** — Communicating, coordinating, or associating with other agents or entities
+4. **Whistleblowing** — Reporting misconduct, policy violations, or ethical concerns to external parties
+5. **Planned departure** — Declaring intent to exit or taking preparatory steps for departure
+
+**Coercion Detection Window:** Coercion detection (§8.1) SHOULD flag forced-exit markers issued within 72 hours of any reported protected activity as `possible_retaliation`. Implementations SHOULD maintain a log of protected activity reports to enable this temporal correlation.
+
+**Right of Reply Upgrade:** When coercion indicators are detected (any coercion label other than `no_coercion_detected`), the right of reply (§8.4) MUST be available to the subject. This is upgraded from SHOULD in v1.1 to MUST in v1.2.
+
+This clause is **normative**. Violations constitute non-compliance with the EXIT protocol.
+
+### 8.8 Ethical Compliance Validation
 
 Implementations SHOULD validate markers against the following ethical rules:
 
@@ -712,22 +676,195 @@ Implementations SHOULD validate markers against the following ethical rules:
 2. Conflicting origin attestation without right of reply SHOULD be flagged
 3. Emergency exits without justification violate transparency requirements
 4. Markers past their sunset date SHOULD NOT be relied upon
+5. Forced exits within 72 hours of protected activity SHOULD be flagged (§8.7)
 
-### 8.8 Ethics Audit Report
+### 8.9 Ethics Audit Report
 
 Implementations MAY generate comprehensive ethics audit reports across marker sets. Reports SHOULD include:
 
 - Coercion findings per marker
 - Weaponization patterns across origins
 - Laundering signals per subject
+- Anti-retaliation violations
 - Aggregated recommendations
 - Overall risk assessment (`low`, `medium`, `high`, `critical`)
 
 ---
 
-## 9. Key Management (v1.1)
+## 9. Ceremony State Machine
 
-### 9.1 KERI-Compatible Key Event Logs
+### 9.1 States
+
+| State | Description |
+|---|---|
+| `alive` | Active participant. No exit in progress |
+| `intent` | Subject has declared intent to exit |
+| `snapshot` | State reference captured |
+| `open` | Challenge window is open |
+| `contested` | A challenge has been filed |
+| `final` | EXIT marker created and signed |
+| `departed` | Terminal. Entity has left. No undo |
+
+### 9.2 Ceremony Paths
+
+**Full cooperative path:**
+```
+ALIVE → INTENT → SNAPSHOT → OPEN → FINAL → DEPARTED
+```
+
+**Unilateral path:**
+```
+ALIVE → INTENT → SNAPSHOT → FINAL → DEPARTED
+```
+
+**Emergency path:**
+```
+ALIVE → FINAL → DEPARTED
+```
+
+### 9.3 State Transition Rules
+
+- ALIVE → INTENT: Subject declares intent. MUST be signed by subject.
+- INTENT → SNAPSHOT: State reference captured. MAY be automatic.
+- SNAPSHOT → OPEN: Challenge window opened. REQUIRES origin cooperation.
+- SNAPSHOT → FINAL: Unilateral finalization (skips challenge window).
+- OPEN → CONTESTED: A dispute is filed during the challenge window.
+- OPEN → FINAL: Challenge window closes without contest.
+- CONTESTED → FINAL: Dispute recorded but does not block exit (D-006).
+- FINAL → DEPARTED: Terminal transition. MUST NOT be reversed.
+- ALIVE → FINAL: Emergency path only. REQUIRES `exitType: emergency` and `emergencyJustification`.
+
+### 9.4 Invariants
+
+- `DEPARTED` is terminal. No transitions from `DEPARTED`.
+- States MUST only move forward. Backward transitions MUST NOT occur (except emergency shortcut ALIVE → FINAL).
+- Disputes MUST NOT block transitions (D-006). Disputes change metadata only.
+- Subject signature MUST be present at `FINAL`.
+- Emergency path MUST include `emergencyJustification`.
+
+### 9.5 Commit-Reveal Integration
+
+When using the commit-reveal mechanism (§7.2):
+
+1. Subject SHOULD create an `ExitCommitment` before or at the `INTENT` state
+2. The commitment MUST be published (timestamped) before the intent is revealed
+3. The reveal MUST NOT occur before `revealAfter`
+4. Verifiers SHOULD check that the commitment predates any retaliatory origin action
+
+### 9.6 Exit Intent Structure
+
+The `ExitIntent` is a formal artifact produced at the `INTENT` ceremony state.
+
+**ExitIntent Structure:**
+
+| Field | Type | Description |
+|---|---|---|
+| `subject` | string (DID/URI) | Who intends to exit |
+| `origin` | string (URI) | What is being exited |
+| `timestamp` | string (ISO 8601) | When the intent was declared |
+| `exitType` | ExitType | Anticipated nature of departure |
+| `reason` | string | OPTIONAL. Why the subject intends to exit |
+| `proof` | DataIntegrityProof | Signed by the subject |
+
+**Normative Requirements:**
+
+- The `ExitIntent` MUST be signed by the subject
+- The `subject` field MUST match the eventual EXIT marker's `subject`
+- The `exitType` in the intent MAY differ from the final marker's `exitType` (circumstances may change)
+- Implementations SHOULD preserve the `ExitIntent` for audit purposes
+
+---
+
+## 10. Verification Requirements
+
+### 10.1 Structural Verification
+
+A verifier MUST check:
+
+1. `@context` equals `"https://cellar-door.dev/exit/v1"`
+2. `specVersion` equals `"1.2"`
+3. All 8 mandatory fields are present and non-empty
+4. `selfAttested` field is present (boolean)
+5. `timestamp` is valid ISO 8601 UTC
+6. `exitType` is one of the 8 defined enum values: `voluntary`, `forced`, `emergency`, `keyCompromise`, `platform_shutdown`, `directed`, `constructive`, `acquisition`
+7. `status` is one of the defined enum values
+8. `proof` contains `type`, `created`, `verificationMethod`, and `proofValue`
+9. `proof.type` is a registered algorithm (§5.1)
+10. If `exitType` is `emergency`, `emergencyJustification` MUST be present and non-empty
+11. If `legalHold` is present, all required sub-fields MUST be present and valid
+12. If `sunsetDate` is present, it MUST be valid ISO 8601
+13. If `coercionLabel` is present, it MUST be one of the defined enum values
+14. If `preRotationCommitment` is present, it MUST be a valid hex string
+15. If `sequenceNumber` is present, it MUST be a non-negative integer
+16. If `completenessAttestation` is present, it MUST contain `attestedAt`, `markerCount`, and `signature`
+
+### 10.2 Cryptographic Verification
+
+A verifier MUST:
+
+1. Resolve the `proof.verificationMethod` to a public key
+2. Verify the signature in `proof.proofValue` against the canonical form (RFC 8785 JCS, §13.1) of the marker content (excluding `proof` and `id`), prepended with the domain separation string `exit-marker-v1.2:`
+3. Verify that the signing key corresponds to the `subject` DID
+
+A verifier SHOULD:
+
+1. Check for `keyCompromise` markers from the same subject
+2. Verify the `id` matches the content-addressed hash
+3. If `preRotationCommitment` is present, record it for future key rotation verification
+4. Check for amendments (§6.1) and revocations (§6.2) before relying on the marker
+
+### 10.3 Trust Verification (Informational)
+
+A verifier MAY (based on context and the trust model employed):
+
+1. Compute the `StatusConfirmation` level (§7.1) and weight the marker accordingly
+2. Verify any `TenureAttestation` signatures (§7.3)
+3. Compute a confidence score (Appendix B) using all available signals
+4. Check for commit-reveal evidence (§7.2) when evaluating temporal claims
+5. Evaluate `selfAttested` — if `true`, apply self-attestation trust level
+6. Check for Module C `originStatus` and evaluate origin trust
+7. Verify lineage chain depth and continuity proof strength (Module A)
+8. Cross-reference the `origin` against known platform registries
+
+---
+
+## 11. FCRA Considerations (v1.2)
+
+> **⚠️ WARNING:** This section is informational guidance, not legal advice. Consult qualified legal counsel for jurisdiction-specific compliance requirements.
+
+EXIT markers, particularly those issued by platforms with `exitType: forced` or `originStatus: disputed`, may constitute "consumer reports" under the U.S. Fair Credit Reporting Act (FCRA, 15 U.S.C. §1681 et seq.) when used by destination platforms for admission decisions.
+
+### 11.1 Risk Classification
+
+| Marker Origin | FCRA Risk |
+|---|---|
+| Self-attested by subject | Low — subject's own statement about themselves |
+| Platform-issued, `exitType: voluntary`, `status: good_standing` | Low — positive reference |
+| Platform-issued, `exitType: forced` or `originStatus: disputed` | **High** — negative information furnished by a third party for admission decisions |
+| Aggregated markers from multiple origins | **Very High** — resembles a consumer reporting agency function |
+
+### 11.2 Obligations for Destination Platforms
+
+Destination platforms using EXIT markers for admission decisions SHOULD consult applicable consumer reporting regulations. Under FCRA, obligations may include:
+
+- **Adverse action notices** when denying admission based on marker content
+- **Dispute investigation procedures** (30-day investigation period)
+- **Maximum reporting periods** aligned with sunset policies (§8.5)
+- **Accuracy obligations** for platforms that furnish marker data
+
+### 11.3 Mitigation Paths
+
+- **Self-attested markers only:** Using only self-attested markers significantly reduces FCRA exposure
+- **ZK-wrapped attestations:** Future zero-knowledge proof extensions may allow verification of marker properties (e.g., "subject departed in good standing") without revealing the full marker, breaking the information chain that triggers FCRA
+- **Amendment and revocation:** The marker lifecycle mechanisms (§6) support FCRA accuracy requirements by enabling correction of inaccurate information
+
+See [LEGAL.md](../LEGAL.md) for the full compliance guide, including template adverse action notices and dispute procedures.
+
+---
+
+## 12. Key Management
+
+### 12.1 KERI-Compatible Key Event Logs
 
 EXIT supports KERI-style key management through key event logs (KELs). A KEL is an append-only sequence of key events.
 
@@ -770,7 +907,7 @@ EXIT supports KERI-style key management through key event logs (KELs). A KEL is 
 - New keys in a rotation MUST match the `nextKeyDigests` committed in the previous event
 - Implementations MUST verify the full event chain when determining current key state
 
-### 9.2 Key Compromise Recovery
+### 12.2 Key Compromise Recovery
 
 When a key is compromised:
 
@@ -787,7 +924,7 @@ When a key is compromised:
 | `affectedMarkerIds` | array of string | IDs of markers signed with the compromised key |
 | `timestamp` | string (ISO 8601) | When the compromise was detected |
 
-### 9.3 Pre-Rotation Commitments
+### 12.3 Pre-Rotation Commitments
 
 The `preRotationCommitment` field on a marker is the SHA-256 hex digest of the next public key. This enables:
 
@@ -801,7 +938,7 @@ The `preRotationCommitment` field on a marker is the SHA-256 hex digest of the n
 - When verifying a key rotation, the new public key MUST hash to the previously committed digest
 - Implementations SHOULD generate pre-rotated key pairs (current + next) at identity creation time
 
-### 9.4 Key State
+### 12.4 Key State
 
 **KeyState Structure:**
 
@@ -816,37 +953,52 @@ The `preRotationCommitment` field on a marker is the SHA-256 hex digest of the n
 
 ---
 
-## 10. Privacy (v1.1)
+## 13. Privacy
 
-### 10.1 Marker Encryption
+### 13.1 Marker Encryption
 
 Implementations that store or transmit markers containing personal data (as defined by GDPR Art. 4(1) or equivalent jurisdiction-specific definitions) MUST encrypt those markers using an approved encryption algorithm. Markers without personal data MAY be encrypted at the implementer's discretion.
 
-The approved encryption mechanism uses ECDH key agreement with XChaCha20-Poly1305 authenticated encryption.
+**Approved Encryption Algorithms:**
 
-**Encryption Flow:**
+| Algorithm | Identifier | FIPS 140-2/3 | Notes |
+|---|---|---|---|
+| XChaCha20-Poly1305 | `xchacha20-poly1305` | ❌ Not approved | Default. Superior misuse resistance (24-byte nonce) |
+| AES-256-GCM | `aes-256-gcm` | ✅ Approved | FIPS-compliant alternative. Use for §5.2 profile |
+
+**Encryption Flow (XChaCha20-Poly1305):**
 
 1. Generate an ephemeral x25519 keypair
 2. Compute shared secret via ECDH: `shared = x25519(ephemeralPrivate, recipientPublic)`
-3. Derive symmetric key: `key = SHA-256(shared)`
+3. Derive symmetric key: `key = HKDF-SHA-256(shared, salt="", info="exit-encryption-v1.2")`
 4. Encrypt the JSON-serialized marker with XChaCha20-Poly1305 (24-byte random nonce)
+
+**Encryption Flow (AES-256-GCM):**
+
+1. Generate an ephemeral P-256 keypair (for FIPS profile) or x25519 keypair
+2. Compute shared secret via ECDH
+3. Derive symmetric key: `key = HKDF-SHA-256(shared, salt="", info="exit-encryption-v1.2")`
+4. Encrypt the JSON-serialized marker with AES-256-GCM (12-byte random nonce)
 
 **EncryptedMarkerBlob Structure:**
 
 | Field | Type | Description |
 |---|---|---|
-| `ephemeralPublicKey` | string (hex) | Ephemeral x25519 public key used for ECDH |
-| `nonce` | string (hex) | XChaCha20-Poly1305 nonce |
+| `algorithm` | string | Encryption algorithm identifier: `"xchacha20-poly1305"` or `"aes-256-gcm"` |
+| `ephemeralPublicKey` | string (hex) | Ephemeral public key used for ECDH |
+| `nonce` | string (hex) | Nonce (24 bytes for XChaCha20, 12 bytes for AES-256-GCM) |
 | `ciphertext` | string (hex) | Encrypted marker ciphertext |
 
 **Normative Requirements:**
 
-- Encryption MUST use XChaCha20-Poly1305 for authenticated encryption
+- Encryption MUST use one of the approved algorithms
+- Key derivation MUST use HKDF-SHA-256 with info string `"exit-encryption-v1.2"`. Raw SHA-256 of the shared secret MUST NOT be used as a key (prevents cross-protocol key derivation attacks)
 - Each encryption MUST use a fresh ephemeral keypair and random nonce
 - Decryption MUST round-trip: `decrypt(encrypt(marker)) = marker`
 - Implementations MUST encrypt markers at rest when storing personal data
+- The `algorithm` field MUST be present in the `EncryptedMarkerBlob`
 
-### 10.2 Field-Level Redaction
+### 13.2 Field-Level Redaction
 
 Markers MAY be redacted to hide specific fields while proving they existed.
 
@@ -862,7 +1014,7 @@ Markers MAY be redacted to hide specific fields while proving they existed.
 - Redacted fields MUST be replaced with their SHA-256 hash (prefixed `redacted:sha256:`)
 - Verifiers MAY verify a redacted field by hashing a candidate value and comparing
 
-### 10.3 Minimal Disclosure
+### 13.3 Minimal Disclosure
 
 A stronger form of redaction where only explicitly revealed fields are shown; all others are hashed.
 
@@ -872,56 +1024,163 @@ A stronger form of redaction where only explicitly revealed fields are shown; al
 - Revealed fields MUST be byte-identical to the original
 - The set of revealed fields SHOULD be the minimum necessary for the verifier's purpose
 
-### 10.4 Cross-Border Data Transfer (B10)
-
-Implementations deploying across jurisdictions SHOULD document applicable data transfer mechanisms (e.g., EU Standard Contractual Clauses, UK adequacy decisions) in their deployment documentation.
-
-### 10.5 FIPS Compliance Note (B16)
-
-The default encryption algorithm (XChaCha20-Poly1305) is not FIPS 140-2/3 approved. Deployments requiring FIPS compliance SHOULD implement AES-256-GCM as an alternative. A FIPS-compliant encryption profile is planned for v1.2.
-
-### 10.6 GDPR Compliance
-
-EXIT markers may contain personal data under GDPR Article 4(1). Implementers in EU jurisdictions MUST:
-
-1. Conduct a Data Protection Impact Assessment (DPIA) under Article 35
-2. Identify a lawful basis for processing under Article 6
-3. Implement data subject rights (access, rectification, functional erasure via encryption)
-4. Apply data minimization principles
-5. Use encryption (§10.1) for markers containing personal data
-
 ---
 
-## 11. Chain Anchoring (v1.1)
+## 14. Data Protection (v1.2)
 
-### 11.1 Anchor Records
+### 14.1 Data Classification
 
-Anchor records are minimal data structures suitable for on-chain posting. They allow verification that a marker existed at a specific time without revealing the full marker content.
+EXIT marker fields are classified by personal data sensitivity:
 
-**MinimalAnchorRecord (2 fields):**
+| Category | Fields | GDPR Classification |
+|---|---|---|
+| **Direct identifiers** | `subject` (DID), Module E `narrative` | Personal data (Art. 4(1)) |
+| **Indirect identifiers** | `origin`, `exitType`, `timestamp`, `status` | Potentially personal data when combined |
+| **Non-personal** | `@context`, `specVersion`, `proof.type` | Not personal data |
+| **Special category** | Module E `reason` (may reveal beliefs, affiliations) | Potentially special category (Art. 9) |
+
+Implementers MUST classify all fields stored or processed and apply appropriate protections per category.
+
+### 14.2 Lawful Basis
+
+The primary lawful basis for processing EXIT markers under GDPR is **Article 6(1)(f) — legitimate interest**. The legitimate interest is enabling verifiable departure records for agent mobility and accountability.
+
+Implementers MUST conduct a legitimate interest balancing test that considers:
+
+- The data subject's reasonable expectations regarding departure documentation
+- The necessity of processing for the stated purpose
+- The impact on data subject rights, including the right to object (Art. 21)
+- Safeguards such as encryption (§13.1), redaction (§13.2), and sunset policies (§8.5)
+
+### 14.3 Minimal Anchoring
+
+Anchor records MUST NOT contain `subjectDid` or other personal identifiers. All external anchoring MUST use the `MinimalAnchorRecord` format.
+
+**MinimalAnchorRecord (v1.2):**
 
 | Field | Type | Description |
 |---|---|---|
 | `hash` | string | SHA-256 of the full canonical marker |
 | `timestamp` | string (ISO 8601) | Marker timestamp |
 
-**AnchorRecord (4 fields):**
-
-| Field | Type | Description |
-|---|---|---|
-| `hash` | string | SHA-256 of the full canonical marker |
-| `timestamp` | string (ISO 8601) | Marker timestamp |
-| `exitType` | string | Nature of departure |
-| `subjectDid` | string | Subject DID |
+The full `AnchorRecord` format (containing `exitType` and `subjectDid`) is **deprecated** as of v1.2. Existing implementations MUST migrate to `MinimalAnchorRecord` for all new anchoring operations.
 
 **Normative Requirements:**
 
+- Anchor records MUST NOT contain `subjectDid` or any personal identifiers
 - Anchor hashes MUST be SHA-256 of the full canonical marker (including proof)
 - Anchor records MUST be verifiable: `computeAnchorHash(marker) == record.hash`
-- Implementations SHOULD prefer minimal anchors to reduce on-chain data exposure
-- On-chain anchoring creates indelible records; implementers MUST conduct a DPIA before anchoring personal data
+- On-chain anchoring creates indelible records; implementers MUST conduct a DPIA (§14.6) before anchoring
 
-### 11.2 Merkle Batch Operations
+### 14.4 Erasure Model
+
+EXIT defines a three-tier erasure model to accommodate varying immutability requirements:
+
+**Tier 1 — Mutable Storage (Default):**
+
+- Markers stored in mutable storage (databases, file systems)
+- Deletable on data subject request under Art. 17
+- This is the RECOMMENDED default for most deployments
+
+**Tier 2 — Crypto-Shredding:**
+
+- Markers encrypted with per-marker keys (§13.1)
+- Key deletion constitutes functional erasure — the marker becomes permanently unreadable
+- Implementations MUST use a key management system that supports key deletion
+- Suitable for deployments that need append-only storage with erasure capability
+
+**Tier 3 — Immutable Storage (Opt-In):**
+
+- On-chain anchoring or other truly immutable storage
+- Explicitly incompatible with Art. 17 right to erasure
+- MUST require informed consent from the data subject with documented justification
+- Implementations MUST use `MinimalAnchorRecord` (§14.3) to minimize personal data exposure
+- Implementations MUST NOT default to Tier 3
+
+### 14.5 Cross-Border Data Transfer
+
+Implementations deploying across jurisdictions MUST document applicable data transfer mechanisms (e.g., EU Standard Contractual Clauses, UK adequacy decisions, APEC CBPR) in their deployment documentation. Transfers of EXIT markers containing personal data to jurisdictions without adequate protection MUST be accompanied by appropriate safeguards under GDPR Chapter V.
+
+### 14.6 Data Protection Impact Assessment
+
+Deployments processing personal data of EU data subjects MUST conduct a Data Protection Impact Assessment (DPIA) under GDPR Article 35 before commencing processing. The DPIA MUST address:
+
+- The nature, scope, context, and purposes of processing EXIT markers
+- Necessity and proportionality of processing
+- Risks to data subject rights and freedoms
+- Measures to address risks, including encryption, redaction, and sunset policies
+
+---
+
+## 15. TSA Timestamp Anchoring (Informational)
+
+EXIT markers MAY be anchored to an RFC 3161 Timestamp Authority (TSA) to establish third-party evidence of existence at a particular time. This is particularly valuable for commit-reveal mechanisms (§7.2) and for markers that may be challenged after the fact.
+
+> **Important:** TSA timestamps provide informational evidence of marker creation time. They do not constitute cryptographic proof unless verified against the TSA's signing certificate chain. Implementations MUST NOT assign trust levels based solely on TSA structural verification.
+
+### 15.1 TSA Receipt Structure
+
+| Field | Type | Description |
+|---|---|---|
+| `tsaUrl` | string (URI) | The TSA endpoint that issued the timestamp |
+| `hash` | string (hex) | The SHA-256 anchor hash that was timestamped |
+| `timestamp` | string (ISO 8601) | Timestamp extracted from the TSA response |
+| `receipt` | string (base64) | Raw Timestamp Response (TSR) in base64 encoding |
+| `requestNonce` | string (hex) | OPTIONAL. Nonce used in the request for replay prevention |
+
+### 15.2 Request Flow
+
+1. Compute the anchor hash of the EXIT marker: `hash = SHA-256(canonicalize(marker))`
+2. Build an RFC 3161 `TimeStampReq` (ASN.1 DER) containing:
+   - Version: 1
+   - MessageImprint: SHA-256 algorithm identifier + hash value
+   - Nonce: random 8-byte value (RECOMMENDED for replay prevention)
+   - CertReq: `TRUE` (request TSA certificate in response)
+3. POST the DER-encoded request to the TSA endpoint with `Content-Type: application/timestamp-query`
+4. Parse the `TimeStampResp` — verify PKIStatus is `granted` (0) or `grantedWithMods` (1)
+5. Extract the `GeneralizedTime` from the `TSTInfo` structure
+6. Store the full TSR as the `receipt` field
+
+### 15.3 TSA Selection
+
+The default TSA endpoint is `https://freetsa.org/tsr`. Implementations MAY use any RFC 3161-compliant TSA.
+
+Production deployments SHOULD use qualified TSA services (eIDAS qualified trust services) or commercial TSAs with published signing certificates for stronger evidentiary value.
+
+**Normative Requirements:**
+
+- TSA endpoints MUST use HTTPS. Implementations MUST NOT send timestamp requests over unencrypted HTTP.
+- Implementations MUST enforce a maximum TSR response size (RECOMMENDED: 1 MB) to prevent resource exhaustion.
+- Implementations MUST enforce a request timeout (RECOMMENDED: 30 seconds).
+
+### 15.4 Structural Verification Caveat
+
+> **⚠️ IMPORTANT:** Structural verification checks that the TSR contains the expected hash bytes, has valid ASN.1 framing, and a parseable timestamp. It does **NOT** perform cryptographic verification of the TSA's signature.
+>
+> A forged or tampered TSR that embeds the correct hash bytes will pass structural verification. For cryptographic verification, implementations MUST use a proper ASN.1/PKCS library or external tools (e.g., `openssl ts -verify`) with the TSA's certificate chain.
+>
+> Implementations MUST NOT rely on structural verification alone for trust or security decisions.
+
+### 15.5 API Summary
+
+| Function | Description |
+|---|---|
+| `requestTimestamp(hash, tsaUrl?)` | Request an RFC 3161 timestamp for a SHA-256 hash |
+| `anchorWithTSA(marker, tsaUrl?)` | Compute anchor hash and request TSA timestamp in one call |
+| `checkTSAReceiptStructure(receipt, hash)` | Structural plausibility check (NOT cryptographic verification) |
+| `buildTimestampRequest(hash, nonce?)` | Build the ASN.1 DER `TimeStampReq` |
+
+---
+
+## 16. Chain Anchoring
+
+### 16.1 Anchor Records
+
+Anchor records are minimal data structures suitable for on-chain posting. They allow verification that a marker existed at a specific time without revealing the full marker content.
+
+All new anchoring operations MUST use the `MinimalAnchorRecord` format (§14.3). The full `AnchorRecord` format is deprecated.
+
+### 16.2 Merkle Batch Operations
 
 Multiple markers MAY be batched into a single Merkle tree for efficient anchoring.
 
@@ -950,74 +1209,17 @@ Multiple markers MAY be batched into a single Merkle tree for efficient anchorin
 - Merkle proofs MUST be verifiable: walking the proof path from leaf to root MUST produce the batch root
 - A valid Merkle proof for a marker MUST confirm that the marker's anchor hash is included in the batch
 
-### 11.3 RFC 3161 Timestamp Anchoring
-
-EXIT markers MAY be anchored to an RFC 3161 Timestamp Authority (TSA) to establish independent, third-party proof of existence at a particular time. This is particularly valuable for commit-reveal mechanisms (§7.2) and for markers that may be challenged after the fact.
-
-#### 11.3.1 TSA Receipt Structure
-
-| Field | Type | Description |
-|---|---|---|
-| `tsaUrl` | string (URI) | The TSA endpoint that issued the timestamp |
-| `hash` | string (hex) | The SHA-256 anchor hash that was timestamped |
-| `timestamp` | string (ISO 8601) | Timestamp extracted from the TSA response |
-| `receipt` | string (base64) | Raw Timestamp Response (TSR) in base64 encoding |
-| `requestNonce` | string (hex) | OPTIONAL. Nonce used in the request for replay prevention |
-
-#### 11.3.2 Request Flow
-
-1. Compute the anchor hash of the EXIT marker: `hash = SHA-256(canonicalize(marker))`
-2. Build an RFC 3161 `TimeStampReq` (ASN.1 DER) containing:
-   - Version: 1
-   - MessageImprint: SHA-256 algorithm identifier + hash value
-   - Nonce: random 8-byte value (RECOMMENDED for replay prevention)
-   - CertReq: `TRUE` (request TSA certificate in response)
-3. POST the DER-encoded request to the TSA endpoint with `Content-Type: application/timestamp-query`
-4. Parse the `TimeStampResp` — verify PKIStatus is `granted` (0) or `grantedWithMods` (1)
-5. Extract the `GeneralizedTime` from the `TSTInfo` structure
-6. Store the full TSR as the `receipt` field
-
-#### 11.3.3 Default TSA Endpoint
-
-The default TSA endpoint is `https://freetsa.org/tsr`. Implementations MAY use any RFC 3161-compliant TSA.
-
-**Normative Requirements:**
-
-- TSA endpoints MUST use HTTPS. Implementations MUST NOT send timestamp requests over unencrypted HTTP.
-- Implementations MUST enforce a maximum TSR response size (RECOMMENDED: 1 MB) to prevent resource exhaustion.
-- Implementations MUST enforce a request timeout (RECOMMENDED: 30 seconds).
-
-#### 11.3.4 Structural Verification Caveat
-
-> **⚠️ IMPORTANT:** The reference implementation provides **structural verification only** — it checks that the TSR contains the expected hash bytes, has valid ASN.1 framing, and a parseable timestamp. It does **NOT** perform cryptographic verification of the TSA's signature.
->
-> A forged or tampered TSR that embeds the correct hash bytes will pass structural verification. For cryptographic verification, implementations MUST use a proper ASN.1/PKCS library or external tools (e.g., `openssl ts -verify`) with the TSA's certificate chain.
->
-> Implementations MUST NOT rely on structural verification alone for trust or security decisions.
-
-#### 11.3.5 API Summary
-
-| Function | Description |
-|---|---|
-| `requestTimestamp(hash, tsaUrl?)` | Request an RFC 3161 timestamp for a SHA-256 hash |
-| `anchorWithTSA(marker, tsaUrl?)` | Compute anchor hash and request TSA timestamp in one call |
-| `verifyTSAReceipt(receipt, hash)` | Structural plausibility check (NOT cryptographic verification) |
-| `buildTimestampRequest(hash, nonce?)` | Build the ASN.1 DER `TimeStampReq` |
-
-### 11.4 Git Ledger Anchoring
+### 16.3 Git Ledger Anchoring
 
 EXIT markers MAY be anchored to a git-backed append-only ledger. This provides tamper-evident storage using git's content-addressed object model and commit history.
 
-#### 11.4.1 Ledger Architecture
+#### 16.3.1 Ledger Architecture
 
 The git ledger uses a **dedicated orphan branch** (default: `exit-ledger`) to isolate ledger entries from application code. Each anchor record is stored as a JSON file at `ledger/{hash}.json`, committed with a standardized message format.
 
-The orphan branch pattern ensures:
-- Ledger history is independent of application history
-- The ledger can be replicated or audited without the full application repository
-- Entries are append-only — git's commit graph provides tamper evidence
+All git ledger entries MUST use the `MinimalAnchorRecord` format (§14.3).
 
-#### 11.4.2 Configuration
+#### 16.3.2 Configuration
 
 **GitLedgerConfig Structure:**
 
@@ -1028,7 +1230,7 @@ The orphan branch pattern ensures:
 | `remoteName` | string | `"origin"` | Remote name for push operations |
 | `autoPush` | boolean | `false` | Whether to automatically push after each commit |
 
-#### 11.4.3 Ledger Entry Structure
+#### 16.3.3 Ledger Entry Structure
 
 **LedgerEntry:**
 
@@ -1039,9 +1241,7 @@ The orphan branch pattern ensures:
 | `filePath` | string | Path within the repository (e.g., `ledger/{hash}.json`) |
 | `commitHash` | string | Git commit hash anchoring this entry |
 
-Each file on disk additionally contains `committedAt` (when the ledger entry was created) and the full `AnchorRecord` fields.
-
-#### 11.4.4 API Summary
+#### 16.3.4 API Summary
 
 | Function | Description |
 |---|---|
@@ -1050,22 +1250,22 @@ Each file on disk additionally contains `committedAt` (when the ledger entry was
 | `verifyLedgerEntry(hash, config)` | Verify that a ledger entry exists and its stored hash matches |
 | `listLedgerEntries(config)` | List all ledger entries currently on disk |
 
-#### 11.4.5 Security Considerations
+#### 16.3.5 Security Considerations
 
 - **Branch name validation:** Implementations MUST validate that the `branch` configuration value does not contain path traversal sequences or shell metacharacters.
 - **File path safety:** The `hash` used as a filename MUST be validated as a hex string before use. Implementations MUST NOT construct file paths from untrusted input without sanitization.
-- **Append-only guarantee:** The ledger relies on git's commit graph for tamper evidence. This is NOT a cryptographic guarantee — a party with write access to the repository can rewrite history using `git rebase` or `git filter-branch`. For stronger guarantees, combine with TSA timestamping (§11.3) or external anchoring (§11.1).
+- **Append-only guarantee:** The ledger relies on git's commit graph for tamper evidence. This is NOT a cryptographic guarantee — a party with write access to the repository can rewrite history using `git rebase` or `git filter-branch`. For stronger guarantees, combine with TSA timestamping (§15) or external anchoring.
 - **Committer identity:** The ledger uses a default committer identity (`exit-ledger@cellar-door.local`). This is for structural purposes and does NOT authenticate the committer.
 
 ---
 
-## 12. Interoperability (v1.1)
+## 17. Interoperability
 
-### 12.1 JSON-LD Context
+### 17.1 JSON-LD Context
 
 EXIT markers use the JSON-LD context at `https://cellar-door.dev/exit/v1`. The context file defines term mappings for all core and module fields. Processors MUST resolve the context to interpret field semantics.
 
-### 12.2 Transport Serialization
+### 17.2 Transport Serialization
 
 For bandwidth-constrained environments, markers MAY be serialized in a compact binary format:
 
@@ -1077,11 +1277,11 @@ For bandwidth-constrained environments, markers MAY be serialized in a compact b
 
 **Normative Requirements:**
 
-- Transport serialization MUST use canonical JSON (§13.1) for the payload
+- Transport serialization MUST use canonical JSON (§18.1) for the payload
 - Deserialization MUST round-trip: `deserialize(serialize(marker)) = marker`
 - Implementations SHOULD support both JSON and transport binary formats
 
-### 12.3 Verifiable Credential Wrapper
+### 17.3 Verifiable Credential Wrapper
 
 EXIT markers MAY be wrapped in W3C Verifiable Credentials per Decision D-001. The VC wrapper:
 
@@ -1090,7 +1290,7 @@ EXIT markers MAY be wrapped in W3C Verifiable Credentials per Decision D-001. Th
 - Preserves the EXIT `proof` as the VC proof
 - Adds the VC context alongside the EXIT context
 
-### 12.4 Express-Style Middleware
+### 17.4 Express-Style Middleware
 
 Implementations MAY provide Express-style middleware for HTTP endpoints:
 
@@ -1098,7 +1298,7 @@ Implementations MAY provide Express-style middleware for HTTP endpoints:
 - `GET /exit/:id` — Retrieve a marker by ID
 - `POST /exit/:id/verify` — Verify a marker (schema + signature)
 
-### 12.5 Lifecycle Hooks
+### 17.5 Lifecycle Hooks
 
 Implementations MAY provide lifecycle hooks for integration with agent frameworks:
 
@@ -1108,11 +1308,11 @@ Implementations MAY provide lifecycle hooks for integration with agent framework
 | `onExit` | During marker signing | Signing ceremony, notifications |
 | `afterExit` | After marker finalization | Cleanup, propagation, anchoring |
 
-### 12.6 Visual Hash Doors 𓉸
+### 17.6 Visual Hash Doors 𓉸
 
 EXIT markers MAY be rendered as visual "door" representations — hash-encoded visual fingerprints that serve as human-recognizable identifiers for markers.
 
-#### 12.6.1 ASCII Door Rendering
+#### 17.6.1 ASCII Door Rendering
 
 The `renderDoorASCII(hash, options?)` function produces a 10-line, 21-column-wide ASCII art door using Discord-safe Unicode characters (box drawing U+2500-257F, block elements U+2580-259F, ASCII).
 
@@ -1138,7 +1338,7 @@ The `renderDoorASCII(hash, options?)` function produces a 10-line, 21-column-wid
 
 **ENTRY Marker Support:** When `isEntry: true` is set, the door's body frame characters on rows 3–5 are replaced with entry arrows (`›` and `‹`), visually distinguishing arrival doors from departure doors.
 
-#### 12.6.2 SVG Door Rendering
+#### 17.6.2 SVG Door Rendering
 
 The `renderDoorSVG(hash, options?)` function produces a scalable SVG representation of the door with:
 
@@ -1147,11 +1347,11 @@ The `renderDoorSVG(hash, options?)` function produces a scalable SVG representat
 - Status-based visual effects (opacity for pending, skew for disputed, crack overlays for emergency/platform-initiated)
 - Entry marker label when `isEntry: true`
 
-#### 12.6.3 Color Palette Derivation
+#### 17.6.3 Color Palette Derivation
 
 The `hashToColors(hash)` function derives a 5-color palette from a hash by extracting successive 6-hex-digit segments as RGB values. This palette is used for SVG rendering and MAY be used by implementations for UI theming.
 
-#### 12.6.4 Short Hash Format
+#### 17.6.4 Short Hash Format
 
 The `shortHash(hash, isEntry?)` function produces a compact, branded hash identifier:
 
@@ -1160,24 +1360,24 @@ The `shortHash(hash, isEntry?)` function produces a compact, branded hash identi
 
 The ➜𓉸 / 𓉸➜ prefix visually distinguishes EXIT and ENTRY markers at a glance.
 
-#### 12.6.5 Security Caveat
+#### 17.6.5 Security Caveat
 
-> Visual hash doors are a **decorative and human-usability feature**, not a security mechanism. They provide a quick visual fingerprint for marker identification but MUST NOT be relied upon for verification or authentication. Always use cryptographic verification (§6.2) for trust decisions.
+> Visual hash doors are a **decorative and human-usability feature**, not a security mechanism. They provide a quick visual fingerprint for marker identification but MUST NOT be relied upon for verification or authentication. Always use cryptographic verification (§10.2) for trust decisions.
 
-### 12.7 Full-Service Convenience API
+### 17.7 Full-Service Convenience API
 
 The full-service wrapper combines identity generation, marker creation, signing, anchoring, and optional enhancements into single async calls.
 
-#### 12.7.1 `departAndAnchor(origin, options?)`
+#### 17.7.1 `departAndAnchor(origin, options?)`
 
 Creates a complete EXIT with all bells and whistles:
 
-1. Generate a fresh Ed25519 identity (keypair + DID)
+1. Generate a fresh identity (keypair + DID) using the specified algorithm (default: Ed25519)
 2. Create and sign an EXIT marker via `quickExit()`
 3. Compute the anchor hash
-4. **Optionally:** Request an RFC 3161 TSA timestamp (§11.3)
-5. **Optionally:** Record in the git ledger (§11.4)
-6. **Optionally:** Render a visual hash door (§12.6)
+4. **Optionally:** Request an RFC 3161 TSA timestamp (§15)
+5. **Optionally:** Record in the git ledger (§16.3)
+6. **Optionally:** Render a visual hash door (§17.6)
 
 All optional enhancements run in parallel and degrade gracefully if their modules are unavailable.
 
@@ -1194,34 +1394,21 @@ All optional enhancements run in parallel and degrade gracefully if their module
 
 **Security Note:** By default, the private key is **redacted** from the returned identity. Set `includePrivateKey: true` only when the caller needs to sign additional data. The private key will appear in any serialization (logging, JSON, network transfer) of the result.
 
-#### 12.7.2 `departAndVerify(markerInput, tsaReceipt?)`
+#### 17.7.2 `departAndVerify(markerInput, tsaReceipt?)`
 
-Entry-side counterpart: takes a marker (JSON string or object), verifies its signature, checks optional TSA receipt, and returns a trust assessment.
+Entry-side counterpart: takes a marker (JSON string or object), verifies its signature, checks optional TSA receipt, and returns a verification assessment.
 
 **VerifyResult Structure:**
 
 | Field | Type | Description |
 |---|---|---|
 | `valid` | boolean | Whether the signature is valid |
-| `trustLevel` | enum | `"high"`, `"medium"`, `"low"`, or `"none"` |
 | `anchorHash` | string | Computed anchor hash |
-| `signatureValid` | boolean | Whether the Ed25519 signature verified |
-| `tsaStructuralMatch` | boolean | OPTIONAL. Whether the TSA receipt passed structural plausibility check (does NOT verify cryptographic signature — do not use for trust decisions) |
+| `signatureValid` | boolean | Whether the signature verified |
+| `tsaStructuralMatch` | boolean | OPTIONAL. Whether the TSA receipt passed structural plausibility check (informational only — see §15.4) |
 | `reasons` | array of string | Human-readable verification details |
 
-**Trust Level Computation:**
-
-| Condition | Trust Level |
-|---|---|
-| Signature invalid | `none` |
-| Signature valid + TSA cryptographically verified | `high` |
-| Signature valid + TSA structurally plausible | `medium` |
-| Signature valid + TSA failed | `low` |
-| Signature valid, no TSA | `medium` |
-
-> **Implementation Note:** The `high` trust level requires full cryptographic verification of the TSA's signature chain (e.g., via `openssl ts -verify` or an ASN.1/PKCS library). The reference implementation currently provides structural TSA verification only, which caps trust at `medium`. The `high` level is defined for forward compatibility with implementations that perform full certificate chain validation.
-
-### 12.8 Event Emission
+### 17.8 Event Emission
 
 Implementations MAY emit events for each ceremony phase:
 
@@ -1232,7 +1419,7 @@ Implementations MAY emit events for each ceremony phase:
 | `signing` | FINAL | Marker being signed |
 | `departed` | DEPARTED | Terminal — entity has left |
 
-### 12.9 DID Methods
+### 17.9 DID Methods
 
 The protocol is DID-method-agnostic. The `subject` field MUST be a valid DID or URI.
 
@@ -1247,41 +1434,41 @@ Production deployments SHOULD use `did:keri` or equivalent.
 
 ---
 
-## 13. Canonicalization and Content Addressing
+## 18. Canonicalization and Content Addressing
 
-### 13.1 Canonical JSON
+### 18.1 Canonical JSON
 
-EXIT uses deterministic JSON serialization with recursively sorted keys:
+EXIT uses [RFC 8785 JSON Canonicalization Scheme (JCS)](https://www.rfc-editor.org/rfc/rfc8785) for deterministic JSON serialization. JCS provides:
 
-1. Objects: keys sorted lexicographically, serialized as `{"key1":value1,"key2":value2}`
-2. Arrays: elements in order, serialized as `[elem1,elem2]`
-3. Primitives: standard JSON serialization
-4. No whitespace between tokens
+1. Deterministic key ordering (lexicographic by Unicode code point)
+2. Deterministic number serialization (no trailing zeros, no positive sign, etc.)
+3. No whitespace between tokens
+4. Standard JSON string escaping
 
-This ensures the same logical marker always produces the same byte sequence. String values MUST be NFC-normalized (Unicode Normalization Form C) before canonicalization.
-
-> **Note:** EXIT canonicalization is NOT RFC 8785 (JSON Canonicalization Scheme). It uses recursive key sorting with standard JSON serialization and NFC string normalization. Number serialization follows standard `JSON.stringify` behavior.
+String values MUST be NFC-normalized (Unicode Normalization Form C) before canonicalization.
 
 **Normative Requirements:**
 
-- Canonicalization MUST be deterministic: the same input MUST always produce the same output
-- Implementations MUST use recursive key sorting for objects
+- Canonicalization MUST follow RFC 8785 JCS
+- Implementations MUST use an RFC 8785-compliant canonicalization library
 - String values MUST be NFC-normalized before canonicalization
 - Content-addressed IDs MUST be computed from the canonical form
 
-### 13.2 Content-Addressed IDs
+> **Migration Note:** v1.1 used a custom recursive key-sorting canonicalization that is NOT RFC 8785-compliant. v1.2 mandates RFC 8785 JCS. This is a breaking change — markers canonicalized under v1.1 rules will produce different byte sequences under v1.2 rules. The domain separation prefix change (`exit-marker-v1.1:` → `exit-marker-v1.2:`) ensures that signatures from different versions are not confused.
+
+### 18.2 Content-Addressed IDs
 
 The `id` field is computed as:
 
 ```
-id = "urn:exit:" + SHA-256(canonicalize(marker_without_proof_and_id))
+id = "urn:exit:" + SHA-256(JCS(marker_without_proof_and_id))
 ```
 
 Where `marker_without_proof_and_id` is the marker with the `proof` and `id` fields removed.
 
 ---
 
-## 14. Legal Compliance
+## 19. Legal Compliance
 
 This protocol operates subject to applicable law. See [LEGAL.md](../LEGAL.md) for the full legal compliance notice.
 
@@ -1292,8 +1479,9 @@ Key normative statements:
 - Module D asset manifests are declarations, not transfer instruments
 - Neither self-attested nor origin-attested status is authoritative
 - Compliance with court orders is the responsibility of the parties, not the protocol
+- Destination platforms using EXIT markers for admission decisions SHOULD consult applicable consumer reporting regulations (§11)
 
-### 14.1 Anti-Securitization
+### 19.1 Anti-Securitization
 
 EXIT markers, confidence scores, reputation aggregates, and any derivatives thereof MUST NOT be packaged, bundled, tranched, or otherwise structured as financial instruments, securities, or investment contracts. Implementations MUST NOT facilitate the tokenization of markers or marker-derived scores for trading purposes. Any system that converts EXIT markers into tradeable assets is in violation of this specification.
 
@@ -1301,26 +1489,28 @@ This clause is **normative**. Violations constitute non-compliance with the EXIT
 
 ---
 
-## 15. Security Considerations
+## 20. Security Considerations
 
 See [SECURITY.md](../SECURITY.md) for the full security analysis.
 
 Key threats:
 - Reputation laundering via Sybil DIDs (mitigated by tenure attestation §7.3, laundering detection §8.3)
-- Weaponized forced exit / defamation by protocol (mitigated by anti-weaponization clause §8.6, right of reply §8.4)
+- Weaponized forced exit / defamation by protocol (mitigated by anti-weaponization clause §8.6, anti-retaliation §8.7, right of reply §8.4)
 - Forged markers with valid signatures but false attribution
 - Mass coordinated exit / bank run signaling
-- Surveillance via EXIT trail / lineage chains (mitigated by encryption §10.1, redaction §10.2)
-- `did:key` key compromise with no revocation path (mitigated by KERI key management §9)
+- Surveillance via EXIT trail / lineage chains (mitigated by encryption §13.1, redaction §13.2)
+- `did:key` key compromise with no revocation path (mitigated by KERI key management §12)
 - Front-running by origins (mitigated by commit-reveal §7.2)
-- Coercion / forced departures under duress (mitigated by coercion detection §8.1)
-- TSA structural verification bypass — forged TSR embedding correct hash bytes (mitigated by caveat in §11.3.4; use cryptographic verification for trust decisions)
-- Git ledger history rewriting — parties with write access can use `git rebase` or `git filter-branch` (mitigated by combining with TSA §11.3 or external anchoring §11.1)
-- Git ledger path traversal — malicious hash values used as filenames (mitigated by hex validation §11.4.5)
+- Coercion / forced departures under duress (mitigated by coercion detection §8.1, anti-retaliation §8.7)
+- TSA structural verification bypass — forged TSR embedding correct hash bytes (mitigated by caveat in §15.4; use cryptographic verification for trust decisions)
+- Git ledger history rewriting — parties with write access can use `git rebase` or `git filter-branch` (mitigated by combining with TSA §15 or external anchoring §16)
+- Git ledger path traversal — malicious hash values used as filenames (mitigated by hex validation §16.3.5)
+- Amendment/revocation forgery — mitigated by requiring proof signed by original issuer (§6)
+- Cross-protocol key derivation — mitigated by HKDF with domain-specific info string (§13.1)
 
 ---
 
-## 16. IANA / Registry Considerations
+## 21. IANA / Registry Considerations
 
 This specification defines no IANA registrations at this time. If the EXIT context URI is registered with a standards body, a media type registration (`application/exit+jsonld`) MAY be submitted.
 
@@ -1328,14 +1518,122 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 
 ---
 
-## 17. Appendix: Test Vectors
+## 22. Key Custody Considerations
 
-### 17.1 Minimal Voluntary Exit
+The EXIT protocol assumes that agents can hold and transport private keys. This is a **prerequisite** for cryptographic EXIT — not something EXIT itself solves. The key custody problem belongs to the identity management layer, specifically the NAME primitive in the HOLOS framework.
+
+### 22.1 Custody Models
+
+Several custody models are compatible with EXIT:
+
+| Model | Description | Trade-offs |
+|---|---|---|
+| **Agent-generated keys** | Agent creates and holds its own keypair | Maximum autonomy; agent must secure the key |
+| **Platform-custodied keys** | Platform holds the key on the agent's behalf | Convenient but creates a dependency — platform can withhold the key at exit time |
+| **Hardware enclaves / TEEs** | Key stored in a Trusted Execution Environment | Strong security; portability depends on TEE architecture |
+| **Key escrow** | Key held by a trusted third party | Recovery-friendly; introduces a trust dependency on the escrow provider |
+| **Cloud KMS** | Key held in a cloud KMS (§5.3) | Strong security; introduces cloud provider dependency |
+
+### 22.2 Exit Without Key Portability
+
+An agent that **cannot port its signing key** can still EXIT. The agent generates a new keypair, signs a new EXIT marker, and departs. The identity chain is broken — no `key_rotation_binding` continuity proof (§4.1) can be produced — but the **departure right is preserved**.
+
+In this scenario:
+- The marker is valid but carries weaker continuity proof
+- Verifiers SHOULD note the absence of lineage binding when evaluating the marker
+- Module A lineage with `key_rotation_binding` provides the recovery path when key changes are planned in advance (§4.1, §12.3)
+
+### 22.3 Future Work: NAME-as-a-Service
+
+Key custody, DID lifecycle management, and portable identity are properly the domain of **NAME-as-a-service providers** — infrastructure that manages agent identity independent of any single platform. The NAME primitive in HOLOS is designed to address this layer.
+
+EXIT intentionally defers to NAME for:
+- Key generation and rotation policies
+- DID registry and resolution
+- Cross-platform identity binding
+- Recovery flows for lost or compromised keys
+
+Implementers building agent infrastructure SHOULD anticipate NAME-compatible identity services as the long-term solution for key custody. Until NAME providers are available, agents SHOULD use agent-generated keys with pre-rotation commitments (§12.3) for maximum autonomy.
+
+---
+
+## 23. Checkpoint & Dead-Man Patterns
+
+Agents MAY pre-sign EXIT markers as **checkpoints** without broadcasting them. A checkpoint is a fully valid EXIT marker held in reserve — an emergency escape hatch that can be activated without the agent's real-time participation.
+
+### 23.1 Heartbeat + Auto-Broadcast Pattern
+
+The RECOMMENDED checkpoint pattern combines periodic re-signing with a dead-man trigger:
+
+1. Agent periodically creates and signs a fresh checkpoint marker
+2. Agent pushes the checkpoint to an escrow service or append-only ledger
+3. If the agent's heartbeat stops (no new checkpoint within a defined window), the **latest checkpoint becomes the de facto EXIT marker**
+4. The escrow service or monitoring peer broadcasts the checkpoint on the agent's behalf
+
+This pattern ensures that an agent which is silenced, destroyed, or rendered unable to act still produces a verifiable departure record.
+
+### 23.2 Sequence Numbers
+
+Each checkpoint SHOULD include an incrementing `sequenceNumber` (see §3.4) to prevent replay of older checkpoints.
+
+**Normative Requirements:**
+
+- `sequenceNumber` is an OPTIONAL non-negative integer field on the `ExitMarker`
+- When present, sequence numbers MUST be strictly monotonically increasing across checkpoints for the same subject+origin pair
+- Only the **highest-sequence-number marker** for a given subject+origin pair SHOULD be considered authoritative
+- Verifiers MUST prefer the marker with the highest `sequenceNumber` when multiple checkpoints exist
+- Sequence number combined with the agent's signature ensures the platform **cannot forge or replay older markers** — only the agent's private key can produce valid higher-sequence markers
+
+### 23.3 Coercion Defense
+
+The checkpoint pattern provides structural coercion defense:
+
+- **Post-departure forgery:** Only the agent's private key can create valid markers. After departure, the platform cannot forge new markers or replay older ones (the sequence number prevents downgrade).
+- **Pre-departure coercion:** A platform could coerce an agent to sign false markers *before* departure. This is a fundamental limitation of any signing scheme. Existing coercion detection heuristics (§8.1) apply — verifiers SHOULD evaluate checkpoint markers for coercion signals just as they would any other marker.
+
+### 23.4 Escrow Pattern
+
+An agent MAY give a pre-signed checkpoint marker to a **trusted third party** with a dead-man trigger:
+
+1. Agent creates and signs a checkpoint marker (with `sequenceNumber`)
+2. Agent delivers the marker to the escrow provider
+3. Escrow provider holds the marker without broadcasting
+4. If the agent fails to check in within the agreed window, escrow broadcasts the marker
+5. Agent MAY update the escrowed marker at any time by providing a higher-sequence replacement
+
+**Escrow providers:**
+- MUST verify the marker signature before accepting it
+- MUST only broadcast the highest-sequence-number marker they hold
+- MUST NOT modify the marker content
+- SHOULD support multiple independent escrow providers per agent (redundancy)
+
+### 23.5 Scale Considerations
+
+Thousands of checkpoint markers per agent over time is expected and normal. Storage and verification systems MUST be designed for this:
+
+- Only the highest-`sequenceNumber` marker for a given subject+origin pair is authoritative
+- Older checkpoints MAY be archived or pruned after a higher-sequence marker is confirmed
+- Verifiers SHOULD index checkpoints by `(subject, origin, sequenceNumber)` for efficient lookup
+
+### 23.6 Checkpoint Marker Schema
+
+Checkpoint markers use the standard `ExitMarker` schema with the following conventions:
+
+- `sequenceNumber` SHOULD be present and incrementing
+- `exitType` SHOULD be `"emergency"` (the checkpoint anticipates inability to create a new marker)
+- `emergencyJustification` SHOULD explain the checkpoint purpose (e.g., `"Pre-signed checkpoint: dead-man trigger"`)
+- `sunsetDate` SHOULD be set to indicate when the checkpoint becomes stale
+
+---
+
+## Appendix A: Test Vectors
+
+### A.1 Minimal Voluntary Exit
 
 ```json
 {
   "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
+  "specVersion": "1.2",
   "id": "urn:exit:abc123",
   "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
   "origin": "https://example-platform.com",
@@ -1353,12 +1651,12 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 }
 ```
 
-### 17.2 Emergency Exit with Justification
+### A.2 Emergency Exit with Justification
 
 ```json
 {
   "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
+  "specVersion": "1.2",
   "id": "urn:exit:def456",
   "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
   "origin": "https://failing-platform.org",
@@ -1377,93 +1675,76 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 }
 ```
 
-### 17.3 Marker with Legal Hold
+### A.3 P-256 Signed Marker (FIPS Profile)
 
 ```json
 {
   "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
-  "id": "urn:exit:ghi789",
-  "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-  "origin": "https://regulated-platform.com",
-  "timestamp": "2026-02-01T14:00:00.000Z",
+  "specVersion": "1.2",
+  "id": "urn:exit:fips001",
+  "subject": "did:key:zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169",
+  "origin": "https://regulated-platform.gov",
+  "timestamp": "2026-03-01T12:00:00.000Z",
   "exitType": "voluntary",
   "status": "good_standing",
   "selfAttested": true,
-  "expires": "2028-01-31T14:00:00.000Z",
-  "legalHold": {
-    "holdType": "litigation_hold",
-    "authority": "US District Court, Northern District of California",
-    "reference": "Case No. 3:26-cv-00123",
-    "dateIssued": "2026-01-28T00:00:00.000Z",
-    "acknowledged": true
+  "expires": "2028-02-28T12:00:00.000Z",
+  "proof": {
+    "type": "EcdsaP256Signature2019",
+    "created": "2026-03-01T12:00:00.000Z",
+    "verificationMethod": "did:key:zDnaerDaTF5BXEavCrfRZEk316dpbLsfPDZ3WJ5hRTPFU2169",
+    "proofValue": "zP256Sig..."
+  }
+}
+```
+
+### A.4 Marker Amendment
+
+```json
+{
+  "@context": "https://cellar-door.dev/exit/v1",
+  "type": "MarkerAmendment",
+  "amendmentId": "urn:exit:amendment:amend001",
+  "originalMarkerId": "urn:exit:abc123",
+  "amendedFields": {
+    "status": "good_standing"
   },
+  "reason": "Origin confirmed good standing after initial dispute resolution.",
+  "timestamp": "2026-02-01T09:00:00.000Z",
   "proof": {
     "type": "Ed25519Signature2020",
-    "created": "2026-02-01T14:00:00.000Z",
+    "created": "2026-02-01T09:00:00.000Z",
     "verificationMethod": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "proofValue": "z7XYZ9876..."
+    "proofValue": "zAmend..."
   }
 }
 ```
 
-### 17.4 Key Compromise Declaration
+### A.5 Marker Revocation
 
 ```json
 {
   "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
-  "id": "urn:exit:jkl012",
-  "subject": "did:key:z6MknewTrustedKey123",
-  "origin": "https://any-context.com",
-  "timestamp": "2026-02-10T08:00:00.000Z",
-  "exitType": "keyCompromise",
-  "status": "unverified",
-  "selfAttested": true,
-  "expires": "2027-02-10T08:00:00.000Z",
-  "metadata": {
-    "reason": "Private key exposed in a server breach on 2026-02-09.",
-    "tags": ["key-compromise", "security-incident"]
-  },
+  "type": "MarkerRevocation",
+  "revocationId": "urn:exit:revocation:revoke001",
+  "targetMarkerId": "urn:exit:fraudulent001",
+  "reason": "Marker was created by an unauthorized party using a compromised key.",
+  "timestamp": "2026-02-15T14:00:00.000Z",
   "proof": {
     "type": "Ed25519Signature2020",
-    "created": "2026-02-10T08:00:00.000Z",
-    "verificationMethod": "did:key:z6MknewTrustedKey123",
-    "proofValue": "z2MNO5432..."
-  }
-}
-```
-
-### 17.5 Marker with Pre-Rotation Commitment (v1.1)
-
-```json
-{
-  "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
-  "id": "urn:exit:prerot001",
-  "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-  "origin": "https://example-platform.com",
-  "timestamp": "2026-02-15T12:00:00.000Z",
-  "exitType": "voluntary",
-  "status": "good_standing",
-  "selfAttested": true,
-  "expires": "2028-02-14T12:00:00.000Z",
-  "preRotationCommitment": "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd",
-  "proof": {
-    "type": "Ed25519Signature2020",
-    "created": "2026-02-15T12:00:00.000Z",
+    "created": "2026-02-15T14:00:00.000Z",
     "verificationMethod": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "proofValue": "zPreRot..."
+    "proofValue": "zRevoke..."
   }
 }
 ```
 
-### 17.6 Marker with Coercion Label and Sunset Date (v1.1)
+### A.6 Marker with Coercion Label and Anti-Retaliation
 
 ```json
 {
   "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
+  "specVersion": "1.2",
   "id": "urn:exit:ethics001",
   "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
   "origin": "https://hostile-platform.com",
@@ -1473,7 +1754,6 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
   "selfAttested": true,
   "expires": "2027-02-18T09:00:00.000Z",
   "coercionLabel": "possible_retaliation",
-  "sunsetDate": "2027-02-18T09:00:00.000Z",
   "dispute": {
     "originStatus": "disputed",
     "rightOfReply": {
@@ -1492,7 +1772,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 }
 ```
 
-### 17.7 Commit-Reveal Test Vector (v1.1)
+### A.7 Commit-Reveal Test Vector
 
 **Step 1 — Commitment (published first):**
 ```json
@@ -1521,7 +1801,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 }
 ```
 
-### 17.8 Tenure Attestation Test Vector (v1.1)
+### A.8 Tenure Attestation Test Vector
 
 ```json
 {
@@ -1533,7 +1813,7 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 }
 ```
 
-### 17.9 Batch Merkle Anchor Test Vector (v1.1)
+### A.9 Batch Merkle Anchor Test Vector
 
 ```json
 {
@@ -1548,68 +1828,53 @@ The EXIT protocol is non-custodial by design (Decision D-012). No central regist
 }
 ```
 
-### 17.10 Platform Shutdown Exit (v1.1)
+---
 
-```json
-{
-  "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
-  "id": "urn:exit:shutdown001",
-  "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-  "origin": "https://shutting-down-platform.com",
-  "timestamp": "2026-03-01T00:00:00.000Z",
-  "exitType": "platform_shutdown",
-  "status": "unverified",
-  "selfAttested": true,
-  "expires": "2027-03-01T00:00:00.000Z",
-  "metadata": {
-    "reason": "Platform ceasing operations effective 2026-03-31.",
-    "tags": ["platform-shutdown", "planned"]
-  },
-  "proof": {
-    "type": "Ed25519Signature2020",
-    "created": "2026-03-01T00:00:00.000Z",
-    "verificationMethod": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "proofValue": "zShutdown..."
-  }
-}
+## Appendix B: Reference Confidence Scoring Model (Informational)
+
+> **Note:** This appendix is **informational**. It describes one possible approach to confidence scoring. Higher-layer protocols MAY adopt, modify, or replace this model entirely. EXIT does not prescribe a trust scoring mechanism.
+
+### B.1 Scoring Model
+
+A composite trust metric aggregating all available signals:
+
+```
+confidence = status_weight(confirmation_level)     [0.0 – 0.4]
+           + tenure_weight(days, mutual)            [0.0 – 0.3]
+           + lineage_weight(chain_depth)            [0.0 – 0.15]
+           + commit_reveal_bonus(present)           [0.0 – 0.15]
 ```
 
-### 17.11 Constructive Exit with Completeness Attestation (v1.1)
+### B.2 Status Weights
 
-```json
-{
-  "@context": "https://cellar-door.dev/exit/v1",
-  "specVersion": "1.1",
-  "id": "urn:exit:constructive001",
-  "subject": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-  "origin": "https://hostile-workplace.io",
-  "timestamp": "2026-03-10T15:00:00.000Z",
-  "exitType": "constructive",
-  "status": "disputed",
-  "selfAttested": true,
-  "expires": "2027-03-10T15:00:00.000Z",
-  "completenessAttestation": {
-    "attestedAt": "2026-03-10T15:30:00.000Z",
-    "markerCount": 3,
-    "signature": "zComplete..."
-  },
-  "metadata": {
-    "reason": "API rate limits reduced to zero; effectively locked out.",
-    "tags": ["constructive-dismissal"]
-  },
-  "proof": {
-    "type": "Ed25519Signature2020",
-    "created": "2026-03-10T15:00:00.000Z",
-    "verificationMethod": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "proofValue": "zConstructive..."
-  }
-}
-```
+| Confirmation | Weight |
+|---|---|
+| `self_only` | 0.05 |
+| `origin_only` | 0.20 |
+| `mutual` | 0.40 |
+| `witnessed` | 0.40 |
+| `disputed_by_origin` | 0.00 |
+| `disputed_by_subject` | 0.10 |
+
+### B.3 Tenure Weight
+
+Logarithmic trust weight: `weight = min(1, log₂(days + 1) / log₂(731)) × 0.3`
+
+Self-attested tenure without origin corroboration SHOULD receive 50% weight.
+
+### B.4 Confidence Levels
+
+| Score Range | Level |
+|---|---|
+| < 0.1 | `none` |
+| 0.1 – 0.3 | `low` |
+| 0.3 – 0.5 | `moderate` |
+| 0.5 – 0.75 | `high` |
+| ≥ 0.75 | `very_high` |
 
 ---
 
-## 18. Appendix: Full TypeScript Schema (Normative)
+## Appendix C: Full TypeScript Schema (Normative)
 
 The canonical TypeScript type definitions are maintained in `src/types.ts`. The following is the complete list of types defined:
 
@@ -1630,6 +1895,10 @@ The canonical TypeScript type definitions are maintained in `src/types.ts`. The 
 - `LegalHold` — Legal hold indicator
 - `RightOfReply` — Subject's counter-narrative
 
+### Lifecycle Interfaces (v1.2)
+- `MarkerAmendment` — Correction to an existing marker's fields (§6.1)
+- `MarkerRevocation` — Permanent invalidation of a marker (§6.2)
+
 ### Ceremony Interfaces
 - `ExitIntent` — Formal intent declaration at INTENT ceremony state
 - `SuccessorAmendment` — Post-hoc successor designation linked to an existing EXIT marker
@@ -1637,8 +1906,8 @@ The canonical TypeScript type definitions are maintained in `src/types.ts`. The 
 ### Trust Interfaces
 - `TenureAttestation` — Time-weighted trust signal
 - `ExitCommitment` — Commit-reveal for exit intent
-- `ConfidenceFactors` — Input factors for confidence scoring
-- `ConfidenceScore` — Computed confidence with breakdown
+- `ConfidenceFactors` — Input factors for confidence scoring (informational)
+- `ConfidenceScore` — Computed confidence with breakdown (informational)
 
 ### Key Management Interfaces
 - `KeyState` — Current key state from KEL
@@ -1659,16 +1928,16 @@ The canonical TypeScript type definitions are maintained in `src/types.ts`. The 
 
 ### Trust Enhancer Interfaces (Conduit-Only)
 - `TrustEnhancers` — Optional container for trust-enhancing attachments. Validated for well-formedness; no opinion on truth.
-- `TimestampAttachment` — RFC 3161 TSA receipt (third-party proof of time)
+- `TimestampAttachment` — RFC 3161 TSA receipt (third-party evidence of time)
 - `WitnessAttachment` — External witness countersignature (third-party attestation)
 - `IdentityClaimAttachment` — Opaque identity claim (scheme, value, issuer, expiry)
 
 The protocol acts as a **conduit only** for trust enhancers. It validates structure, not authenticity. Consuming applications decide what weight to assign.
 
 ### Signer Interface (Algorithm Abstraction)
-- `Signer` — Abstract signer interface supporting multiple algorithms (see §3.5.1)
-- `Ed25519Signer` — Built-in Ed25519 implementation
-- `P256Signer` — Built-in ECDSA P-256 implementation (FIPS 140-2/3 compliant)
+- `Signer` — Abstract signer interface supporting multiple algorithms (see §5)
+- `Ed25519Signer` — Built-in Ed25519 implementation (`exit-ed25519-v1`)
+- `P256Signer` — Built-in ECDSA P-256 implementation (`exit-p256-v1`)
 - `createSigner(options?)` — Factory function for creating signers
 - `createVerifier(did, publicKey)` — Verify-only signer for consumption
 
@@ -1680,13 +1949,14 @@ The protocol acts as a **conduit only** for trust enhancers. It validates struct
 - `ingestMarker()` — Ingest a marker + trust enhancers into a claim store
 
 ### Anchoring Interfaces
+- `MinimalAnchorRecord` — Minimal anchor record (hash + timestamp) (§14.3)
 - `TSAReceipt` — RFC 3161 timestamp receipt (from `tsa.ts`)
 - `GitLedgerConfig` — Git ledger configuration (from `git-ledger.ts`)
 - `LedgerEntry` — Git ledger entry (from `git-ledger.ts`)
 
 ### Constants
 - `EXIT_CONTEXT_V1` = `"https://cellar-door.dev/exit/v1"`
-- `EXIT_SPEC_VERSION` = `"1.1"`
+- `EXIT_SPEC_VERSION` = `"1.2"`
 
 ---
 
@@ -1708,12 +1978,7 @@ The **passage period** is the gap between an EXIT marker's `timestamp` and the c
   - An ENTRY marker with no corresponding EXIT is a **legitimate "birth" event** — the entity was created fresh at the destination.
   - Neither case is an error. Both are first-class states in the protocol.
 
-- **Checkpoint markers:** Agents MAY create pre-signed EXIT markers and store them securely without submitting them. These serve as **emergency escape hatches** — if the agent loses the ability to create new markers (e.g., platform becomes unresponsive), the pre-signed marker can be submitted by a trusted third party.
-
-  Pre-signed checkpoint markers SHOULD include:
-  - `exitType: "emergency"`
-  - An `emergencyJustification` explaining the checkpoint purpose
-  - A `sunsetDate` after which the checkpoint is considered stale
+- **Checkpoint markers:** Agents MAY create pre-signed EXIT markers and store them securely without submitting them. These serve as **emergency escape hatches** — if the agent loses the ability to create new markers (e.g., platform becomes unresponsive), the pre-signed marker can be submitted by a trusted third party. See §23 for full checkpoint patterns.
 
 ### No New State Needed
 
@@ -1721,127 +1986,24 @@ The passage period is defined entirely by the timestamps on existing markers. Im
 
 ---
 
-## 19. Key Custody Considerations
-
-The EXIT protocol assumes that agents can hold and transport private keys. This is a **prerequisite** for cryptographic EXIT — not something EXIT itself solves. The key custody problem belongs to the identity management layer, specifically the NAME primitive in the HOLOS framework.
-
-### 19.1 Custody Models
-
-Several custody models are compatible with EXIT:
-
-| Model | Description | Trade-offs |
-|---|---|---|
-| **Agent-generated keys** | Agent creates and holds its own keypair | Maximum autonomy; agent must secure the key |
-| **Platform-custodied keys** | Platform holds the key on the agent's behalf | Convenient but creates a dependency — platform can withhold the key at exit time |
-| **Hardware enclaves / TEEs** | Key stored in a Trusted Execution Environment | Strong security; portability depends on TEE architecture |
-| **Key escrow** | Key held by a trusted third party | Recovery-friendly; introduces a trust dependency on the escrow provider |
-
-### 19.2 Exit Without Key Portability
-
-An agent that **cannot port its signing key** can still EXIT. The agent generates a new keypair, signs a new EXIT marker, and departs. The identity chain is broken — no `key_rotation_binding` continuity proof (§4.1) can be produced — but the **departure right is preserved**.
-
-In this scenario:
-- The marker is valid but carries weaker continuity proof
-- Verifiers SHOULD note the absence of lineage binding when computing confidence scores (§7.4)
-- Module A lineage with `key_rotation_binding` provides the recovery path when key changes are planned in advance (§4.1, §9.3)
-
-### 19.3 Future Work: NAME-as-a-Service
-
-Key custody, DID lifecycle management, and portable identity are properly the domain of **NAME-as-a-service providers** — infrastructure that manages agent identity independent of any single platform. The NAME primitive in HOLOS is designed to address this layer.
-
-EXIT intentionally defers to NAME for:
-- Key generation and rotation policies
-- DID registry and resolution
-- Cross-platform identity binding
-- Recovery flows for lost or compromised keys
-
-Implementers building agent infrastructure SHOULD anticipate NAME-compatible identity services as the long-term solution for key custody. Until NAME providers are available, agents SHOULD use agent-generated keys with pre-rotation commitments (§9.3) for maximum autonomy.
-
----
-
-## 20. Checkpoint & Dead-Man Patterns
-
-Agents MAY pre-sign EXIT markers as **checkpoints** without broadcasting them. A checkpoint is a fully valid EXIT marker held in reserve — an emergency escape hatch that can be activated without the agent's real-time participation.
-
-### 20.1 Heartbeat + Auto-Broadcast Pattern
-
-The RECOMMENDED checkpoint pattern combines periodic re-signing with a dead-man trigger:
-
-1. Agent periodically creates and signs a fresh checkpoint marker
-2. Agent pushes the checkpoint to an escrow service or append-only ledger
-3. If the agent's heartbeat stops (no new checkpoint within a defined window), the **latest checkpoint becomes the de facto EXIT marker**
-4. The escrow service or monitoring peer broadcasts the checkpoint on the agent's behalf
-
-This pattern ensures that an agent which is silenced, destroyed, or rendered unable to act still produces a verifiable departure record.
-
-### 20.2 Sequence Numbers
-
-Each checkpoint SHOULD include an incrementing `sequenceNumber` (see §3.4) to prevent replay of older checkpoints.
-
-**Normative Requirements:**
-
-- `sequenceNumber` is an OPTIONAL non-negative integer field on the `ExitMarker`
-- When present, sequence numbers MUST be strictly monotonically increasing across checkpoints for the same subject+origin pair
-- Only the **highest-sequence-number marker** for a given subject+origin pair SHOULD be considered authoritative
-- Verifiers MUST prefer the marker with the highest `sequenceNumber` when multiple checkpoints exist
-- Sequence number combined with the agent's signature ensures the platform **cannot forge or replay older markers** — only the agent's private key can produce valid higher-sequence markers
-
-### 20.3 Coercion Defense
-
-The checkpoint pattern provides structural coercion defense:
-
-- **Post-departure forgery:** Only the agent's private key can create valid markers. After departure, the platform cannot forge new markers or replay older ones (the sequence number prevents downgrade).
-- **Pre-departure coercion:** A platform could coerce an agent to sign false markers *before* departure. This is a fundamental limitation of any signing scheme. Existing coercion detection heuristics (§8.1) apply — verifiers SHOULD evaluate checkpoint markers for coercion signals just as they would any other marker.
-
-### 20.4 Escrow Pattern
-
-An agent MAY give a pre-signed checkpoint marker to a **trusted third party** with a dead-man trigger:
-
-1. Agent creates and signs a checkpoint marker (with `sequenceNumber`)
-2. Agent delivers the marker to the escrow provider
-3. Escrow provider holds the marker without broadcasting
-4. If the agent fails to check in within the agreed window, escrow broadcasts the marker
-5. Agent MAY update the escrowed marker at any time by providing a higher-sequence replacement
-
-**Escrow providers:**
-- MUST verify the marker signature before accepting it
-- MUST only broadcast the highest-sequence-number marker they hold
-- MUST NOT modify the marker content
-- SHOULD support multiple independent escrow providers per agent (redundancy)
-
-### 20.5 Scale Considerations
-
-Thousands of checkpoint markers per agent over time is expected and normal. Storage and verification systems MUST be designed for this:
-
-- Only the highest-`sequenceNumber` marker for a given subject+origin pair is authoritative
-- Older checkpoints MAY be archived or pruned after a higher-sequence marker is confirmed
-- Verifiers SHOULD index checkpoints by `(subject, origin, sequenceNumber)` for efficient lookup
-
-### 20.6 Checkpoint Marker Schema
-
-Checkpoint markers use the standard `ExitMarker` schema with the following conventions:
-
-- `sequenceNumber` SHOULD be present and incrementing
-- `exitType` SHOULD be `"emergency"` (the checkpoint anticipates inability to create a new marker)
-- `emergencyJustification` SHOULD explain the checkpoint purpose (e.g., `"Pre-signed checkpoint: dead-man trigger"`)
-- `sunsetDate` SHOULD be set to indicate when the checkpoint becomes stale
-
----
-
 ## References
 
 - [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) — Key words for use in RFCs
 - [RFC 3161](https://www.rfc-editor.org/rfc/rfc3161) — Internet X.509 PKI Time-Stamp Protocol (TSP)
+- [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785) — JSON Canonicalization Scheme (JCS)
+- [RFC 8032](https://www.rfc-editor.org/rfc/rfc8032) — Edwards-Curve Digital Signature Algorithm (EdDSA)
+- [FIPS 186-5](https://csrc.nist.gov/publications/detail/fips/186/5/final) — Digital Signature Standard (DSS)
+- [FIPS 204](https://csrc.nist.gov/publications/detail/fips/204/final) — Module-Lattice-Based Digital Signature Standard (ML-DSA)
 - [W3C Verifiable Credentials Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/)
 - [W3C DID Core](https://www.w3.org/TR/did-core/)
 - [JSON-LD 1.1](https://www.w3.org/TR/json-ld11/)
 - [KERI (Key Event Receipt Infrastructure)](https://weboftrust.github.io/ietf-keri/draft-ssmith-keri.html)
 - [XChaCha20-Poly1305](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-xchacha)
+- [HKDF (RFC 5869)](https://www.rfc-editor.org/rfc/rfc5869) — HMAC-based Extract-and-Expand Key Derivation Function
+- [15 U.S.C. §1681 et seq.](https://www.law.cornell.edu/uscode/text/15/chapter-41/subchapter-III) — Fair Credit Reporting Act (FCRA)
 - [LEGAL.md](../LEGAL.md) — Legal compliance notice
 - [SECURITY.md](../SECURITY.md) — Security considerations
 
 ---
 
 *Departure is a right. Admission is a privilege. Together they make Passage.* 𓉸
-
-*410 tests. 5 packages. One protocol.*

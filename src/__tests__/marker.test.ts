@@ -370,28 +370,21 @@ describe("New ExitType values (v1.1)", () => {
   }
 
   describe("NFC normalization", () => {
-    it("produces identical canonical output for NFC and NFD forms", () => {
+    it("RFC 8785 JCS does not normalize Unicode — NFC vs NFD produce different canonical output", () => {
       // é as single codepoint (NFC) vs e + combining acute (NFD)
       const nfc = "caf\u00E9";
       const nfd = "cafe\u0301";
       expect(nfc).not.toBe(nfd); // different byte representations
       expect(nfc.normalize("NFC")).toBe(nfd.normalize("NFC")); // same after NFC
 
-      const marker1 = createMarker({
-        subject: "did:key:z6MkTest",
-        origin: `https://${nfc}.example.com`,
-        exitType: ExitType.Voluntary,
-      });
-      const marker2 = createMarker({
-        subject: "did:key:z6MkTest",
-        origin: `https://${nfd}.example.com`,
-        exitType: ExitType.Voluntary,
-        timestamp: marker1.timestamp,
-      });
+      // JCS preserves strings as-is per RFC 8785 — no NFC normalization.
+      // Callers should normalize inputs before creating markers.
+      expect(canonicalize({ x: nfc })).not.toBe(canonicalize({ x: nfd }));
 
-      const { proof: _p1, id: _id1, ...rest1 } = marker1;
-      const { proof: _p2, id: _id2, ...rest2 } = marker2;
-      expect(canonicalize(rest1)).toBe(canonicalize(rest2));
+      // But NFC-normalized inputs produce identical output
+      expect(canonicalize({ x: nfc.normalize("NFC") })).toBe(
+        canonicalize({ x: nfd.normalize("NFC") })
+      );
     });
   });
 });

@@ -4,10 +4,11 @@
  * Filesystem-based, non-custodial. The agent/owner holds their own markers.
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, unlinkSync } from "node:fs";
 import { join, resolve, isAbsolute } from "node:path";
 import { validateMarker } from "./validate.js";
 import type { ExitMarker } from "./types.js";
+import type { AmendmentMarker, RevocationMarker } from "./amendment.js";
 
 /**
  * Validate that a storage directory path is safe (no path traversal via `..`).
@@ -76,6 +77,22 @@ export function listMarkers(dir: string): string[] {
 }
 
 /**
+ * Delete a marker by ID from local storage.
+ *
+ * @param id - The marker ID to delete.
+ * @param dir - The storage directory path.
+ * @returns `true` if the file was deleted, `false` if it didn't exist.
+ */
+export function deleteMarker(id: string, dir: string): boolean {
+  dir = validateDir(dir);
+  const safeId = id.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filePath = join(dir, `${safeId}.json`);
+  if (!existsSync(filePath)) return false;
+  unlinkSync(filePath);
+  return true;
+}
+
+/**
  * Export a marker as a portable JSON string.
  *
  * @param marker - The EXIT marker to export.
@@ -94,6 +111,56 @@ export function exportMarker(marker: ExitMarker): string {
  */
 /** Maximum JSON input size for parsing (1 MB). */
 const MAX_JSON_SIZE = 1_048_576;
+
+/**
+ * Save an amendment to local storage under `{dir}/amendments/{originalMarkerId}/`.
+ */
+export function saveAmendment(amendment: AmendmentMarker, dir: string): string {
+  dir = validateDir(dir);
+  const subdir = join(dir, "amendments", amendment.originalMarkerId.replace(/[^a-zA-Z0-9_-]/g, "_"));
+  if (!existsSync(subdir)) mkdirSync(subdir, { recursive: true });
+  const safeId = amendment.amendmentId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filePath = join(subdir, `${safeId}.json`);
+  writeFileSync(filePath, JSON.stringify(amendment, null, 2), "utf-8");
+  return filePath;
+}
+
+/**
+ * Load all amendments for a given original marker ID.
+ */
+export function loadAmendments(originalMarkerId: string, dir: string): AmendmentMarker[] {
+  dir = validateDir(dir);
+  const subdir = join(dir, "amendments", originalMarkerId.replace(/[^a-zA-Z0-9_-]/g, "_"));
+  if (!existsSync(subdir)) return [];
+  return readdirSync(subdir)
+    .filter(f => f.endsWith(".json"))
+    .map(f => JSON.parse(readFileSync(join(subdir, f), "utf-8")) as AmendmentMarker);
+}
+
+/**
+ * Save a revocation to local storage under `{dir}/revocations/`.
+ */
+export function saveRevocation(revocation: RevocationMarker, dir: string): string {
+  dir = validateDir(dir);
+  const subdir = join(dir, "revocations", revocation.targetMarkerId.replace(/[^a-zA-Z0-9_-]/g, "_"));
+  if (!existsSync(subdir)) mkdirSync(subdir, { recursive: true });
+  const safeId = revocation.revocationId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filePath = join(subdir, `${safeId}.json`);
+  writeFileSync(filePath, JSON.stringify(revocation, null, 2), "utf-8");
+  return filePath;
+}
+
+/**
+ * Load all revocations for a given target marker ID.
+ */
+export function loadRevocations(targetMarkerId: string, dir: string): RevocationMarker[] {
+  dir = validateDir(dir);
+  const subdir = join(dir, "revocations", targetMarkerId.replace(/[^a-zA-Z0-9_-]/g, "_"));
+  if (!existsSync(subdir)) return [];
+  return readdirSync(subdir)
+    .filter(f => f.endsWith(".json"))
+    .map(f => JSON.parse(readFileSync(join(subdir, f), "utf-8")) as RevocationMarker);
+}
 
 export function importMarker(json: string): ExitMarker {
   if (json.length > MAX_JSON_SIZE) {

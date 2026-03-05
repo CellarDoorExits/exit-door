@@ -202,7 +202,7 @@ export class CeremonyStateMachine {
       const signer = signerOrPrivateKey;
       const { proof: _proof, id: _id, ...rest } = marker;
       const canonical = canonicalize(rest);
-      const data = new TextEncoder().encode("exit-marker-v1.1:" + canonical);
+      const data = new TextEncoder().encode("exit-marker-v1.2:" + canonical);
       const sig = await signer.sign(data);
       this.marker = {
         ...marker,

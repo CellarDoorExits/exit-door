@@ -79,6 +79,10 @@ export {
   didFromP256PublicKey,
   publicKeyFromP256Did,
   algorithmFromDid,
+  type AlgorithmId,
+  type RegisteredAlgorithm,
+  AlgorithmRegistry,
+  getAlgorithm,
 } from "./crypto.js";
 
 // Signer abstraction
@@ -123,6 +127,7 @@ export {
 export {
   generateIdentity,
   quickExit,
+  quickExitP256,
   quickVerify,
   fromJSON,
   toJSON,
@@ -155,6 +160,7 @@ export {
   saveMarker,
   loadMarker,
   listMarkers,
+  deleteMarker,
   exportMarker,
   importMarker,
 } from "./storage.js";
@@ -174,7 +180,14 @@ export {
   decryptMarker,
   redactMarker,
   createMinimalDisclosure,
+  encryptMarkerWithManagedKey,
+  decryptManagedMarker,
+  deleteMarkerKey,
+  InMemoryKeyStore,
   type EncryptedMarkerBlob,
+  type EncryptionAlgorithm,
+  type KeyStore,
+  type ManagedEncryptedBlob,
 } from "./privacy.js";
 
 // Sprint 4: DID Resolution
@@ -244,7 +257,10 @@ export {
   detectCoercion,
   detectWeaponization,
   detectReputationLaundering,
+  detectRetaliationWindow,
   generateEthicsReport,
+  type ReportedActivity,
+  type RetaliationResult,
 } from "./ethics.js";
 
 export {
@@ -272,7 +288,8 @@ export {
 export {
   requestTimestamp,
   anchorWithTSA,
-  verifyTSAReceipt,
+  checkTSAReceiptStructure,
+  checkTSAReceiptStructure as verifyTSAReceipt,
   buildTimestampRequest,
   extractTimestampFromTSR,
   checkTSRStatus,
@@ -349,6 +366,29 @@ export {
   type ClaimStoreStats,
   type ClaimStoreBackend,
 } from "./claim-store.js";
+
+// Amendment & Revocation
+export {
+  createAmendment,
+  createRevocation,
+  applyAmendment,
+  applyAmendments,
+  resolveMarker,
+  verifyAmendmentSignature,
+  verifyRevocationSignature,
+  type AmendmentMarker,
+  type RevocationMarker,
+  type SignedProof,
+  type ResolvedMarker,
+} from "./amendment.js";
+
+// Amendment/Revocation Storage
+export {
+  saveAmendment,
+  loadAmendments,
+  saveRevocation,
+  loadRevocations,
+} from "./storage.js";
 
 // Telemetry (OpenTelemetry integration)
 export {

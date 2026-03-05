@@ -52,7 +52,7 @@ export type FullExitOpts = QuickExitOpts & {
 };
 
 /** Trust levels for verification assessment. */
-export type TrustLevel = "high" | "medium" | "low" | "none";
+export type TrustLevel = "high" | "informational" | "low" | "none";
 
 export interface VerifyResult {
   valid: boolean;
@@ -113,8 +113,8 @@ async function tryVisual(marker: ExitMarker): Promise<string | undefined> {
 async function tryVerifyTsa(receipt: any): Promise<boolean | undefined> {
   try {
     const tsa = await import("./tsa.js");
-    if (typeof tsa.verifyTSAReceipt === "function") {
-      return await tsa.verifyTSAReceipt(receipt, receipt.hash);
+    if (typeof tsa.checkTSAReceiptStructure === "function") {
+      return await tsa.checkTSAReceiptStructure(receipt, receipt.hash);
     }
   } catch {
     // tsa module not available yet
@@ -266,15 +266,15 @@ export async function departAndVerify(
   // structural checks can be trivially forged. Full cryptographic TSA
   // verification (via openssl ts -verify or ASN.1/PKCS library) is required
   // for "high" trust. Until crypto verification is implemented, TSA presence
-  // contributes to "medium" trust at most.
+  // contributes to "informational" trust at most.
   let trustLevel: TrustLevel;
   if (!signatureValid) {
     trustLevel = "none";
   } else if (tsaReceipt && tsaStructuralMatch === false) {
     trustLevel = "low";
   } else {
-    // Valid signature, with or without TSA (structural match doesn't elevate beyond medium)
-    trustLevel = "medium";
+    // Valid signature, with or without TSA (structural match doesn't elevate beyond informational)
+    trustLevel = "informational";
   }
 
   return {

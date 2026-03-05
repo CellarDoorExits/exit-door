@@ -267,6 +267,89 @@ export function detectReputationLaundering(
   return { signals, probability };
 }
 
+// ─── Retaliation Detection ────────────────────────────────────────────────────
+
+/** A reported protected activity (whistleblowing, complaint, etc.). */
+export interface ReportedActivity {
+  type: string;
+  timestamp: string;
+}
+
+/** Result of retaliation window analysis. */
+export interface RetaliationResult {
+  detected: boolean;
+  indicators: string[];
+}
+
+const RETALIATION_WINDOW_MS = 72 * 60 * 60 * 1000; // 72 hours
+
+/**
+ * Detect whether a forced exit occurred within 72 hours of a reported
+ * protected activity (e.g. whistleblowing, filing a complaint, reporting
+ * misconduct). Temporal proximity alone is a signal, not proof.
+ *
+ * @param marker - The EXIT marker to analyze.
+ * @param reportedActivities - Optional list of protected activities with timestamps.
+ * @returns A {@link RetaliationResult} with detection status and indicators.
+ *
+ * @example
+ * ```ts
+ * const result = detectRetaliationWindow(marker, [
+ *   { type: "whistleblower_report", timestamp: "2026-03-01T10:00:00Z" },
+ * ]);
+ * if (result.detected) {
+ *   console.log("Retaliation indicators:", result.indicators);
+ * }
+ * ```
+ */
+export function detectRetaliationWindow(
+  marker: ExitMarker,
+  reportedActivities?: ReportedActivity[],
+): RetaliationResult {
+  const indicators: string[] = [];
+
+  // Only relevant for forced/directed/constructive exits
+  if (
+    marker.exitType !== ExitType.Forced &&
+    marker.exitType !== ExitType.Directed &&
+    marker.exitType !== ExitType.Constructive
+  ) {
+    return { detected: false, indicators };
+  }
+
+  if (!reportedActivities || reportedActivities.length === 0) {
+    return { detected: false, indicators };
+  }
+
+  const exitTime = new Date(marker.timestamp).getTime();
+
+  for (const activity of reportedActivities) {
+    const activityTime = new Date(activity.timestamp).getTime();
+    const delta = exitTime - activityTime;
+
+    // Exit must come after the activity and within 72 hours
+    if (delta >= 0 && delta <= RETALIATION_WINDOW_MS) {
+      const hours = Math.round(delta / (1000 * 60 * 60));
+      indicators.push(
+        `Forced exit occurred ${hours}h after "${activity.type}" — within 72h retaliation window`
+      );
+    }
+  }
+
+  // Also flag if exit has coercion signals compounding the retaliation concern
+  const coercion = detectCoercion(marker);
+  if (coercion.riskLevel !== "none" && indicators.length > 0) {
+    indicators.push(
+      `Coercion signals (${coercion.riskLevel}) compound retaliation concern`
+    );
+  }
+
+  return {
+    detected: indicators.length > 0,
+    indicators,
+  };
+}
+
 // ─── Ethics Report ───────────────────────────────────────────────────────────
 
 /**

@@ -5,9 +5,12 @@ import {
   checkTSRStatus,
   requestTimestamp,
   anchorWithTSA,
-  verifyTSAReceipt,
+  checkTSAReceiptStructure,
   type TSAReceipt,
 } from "../tsa.js";
+
+// Backward compat alias for tests
+const verifyTSAReceipt = checkTSAReceiptStructure;
 import {
   generateKeyPair,
   createMarker,

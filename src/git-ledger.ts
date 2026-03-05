@@ -11,7 +11,7 @@ import { execFile as execFileCb } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdir, writeFile, readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { createAnchorRecord, type AnchorRecord } from "./anchor.js";
+import { createAnchorRecord, type MinimalAnchorRecord } from "./anchor.js";
 import type { ExitMarker } from "./types.js";
 
 const execFile = promisify(execFileCb);
@@ -39,7 +39,7 @@ export interface LedgerEntry {
 }
 
 /** Full content persisted in each ledger JSON file. */
-interface LedgerFileContent extends AnchorRecord {
+interface LedgerFileContent extends MinimalAnchorRecord {
   committedAt: string;
   commitHash?: string;
 }

@@ -111,7 +111,7 @@ export function createCompromiseMarker(
 
   // Sign with the new key (the current key after rotation)
   // Use domain separation prefix consistent with signMarker/verifyMarker (CRYPTO-001 fix)
-  const DOMAIN_PREFIX = "exit-marker-v1.1:";
+  const DOMAIN_PREFIX = "exit-marker-v1.2:";
   const canonical = canonicalize({ ...marker, proof: undefined });
   const data = new TextEncoder().encode(DOMAIN_PREFIX + canonical);
   const signature = sign(data, signingKey);

@@ -1,8 +1,17 @@
 # cellar-door-exit 𓉸
 
-**Right of Passage** — verifiable EXIT markers for AI agents, platforms, and DAOs.
+**Right of Passage** -- verifiable EXIT markers for AI agents, platforms, and DAOs.
 
-www.cellar-door.dev
+## Protocol Stack
+
+EXIT is a foundational protocol layer (L0) for agent lifecycle documentation:
+
+- **L0: EXIT** -- Departure records (this protocol)
+- **L1: Reputation/Naming** -- Trust scoring, identity reputation (future)
+- **L2: Insurance/Stakes** -- Economic guarantees, bonded attestation (future)
+- **L3: Governance** -- Collective decision-making, coordination (future)
+
+EXIT intentionally limits its scope to departure documentation. Trust scoring, reputation management, and economic mechanisms compose on top.
 
 ## The Problem
 
@@ -12,7 +21,11 @@ Today: it can't. There's no portable, verifiable proof of departure. No vehicle 
 
 ## The Solution
 
-EXIT markers — signed, portable, offline-verifiable proof of departure. A departure **ceremony** that produces a cryptographic record of *when* an agent left, *how* things stood, and *why*.
+EXIT markers: signed, portable, offline-verifiable proof of departure. A departure **ceremony** that produces a cryptographic record of *when* an agent left, *how* things stood, and *why*.
+
+**Amendments and Revocations:** v1.2 adds `MarkerAmendment` for correcting false markers and `MarkerRevocation` for invalidating fraudulent ones, without breaking content-addressing.
+
+**New in v1.2:** Algorithm agility with P-256 as co-default, MarkerAmendment and Revocation support, FIPS-compliant deployment path, and crypto-shredding for GDPR compliance.
 
 Think of it as a vehicle history report, but for AI agents. Except the agent signs it, not the dealer.
 
@@ -36,6 +49,18 @@ console.log(result.valid); // true
 
 That's it. Signed, verifiable proof of departure in 3 lines.
 
+**P-256 (FIPS-compliant):**
+
+```typescript
+import { quickExit, quickVerify, toJSON } from "cellar-door-exit";
+
+const { marker } = quickExit("did:web:platform.example", { algorithm: "p256" });
+console.log(toJSON(marker));
+
+const result = quickVerify(toJSON(marker));
+console.log(result.valid); // true
+```
+
 ## How It Works
 
 EXIT is a **ceremony**, not a single event. Three paths, depending on cooperation:
@@ -58,7 +83,7 @@ Every EXIT marker has **7 mandatory fields** (~335 bytes unsigned):
 | `status` | `good_standing` · `disputed` · `unverified` |
 | `proof` | Cryptographic signature |
 
-Contests don't block exit. A dispute changes `status` — it never prevents departure.
+Contests don't block exit. A dispute changes `status` -- it never prevents departure.
 
 ## API
 
@@ -101,12 +126,12 @@ exit inspect marker.json             # Pretty-print all fields
 
 Six optional modules extend the core 7-field schema:
 
-- **A: Lineage** — Predecessor/successor chains for agent migration
-- **B: State Snapshot** — Hash-referenced state at exit time
-- **C: Dispute Bundle** — Active disputes, evidence, challenge windows
-- **D: Economic** — Asset manifests, obligations, exit fees ⚠️ *securities disclaimer applies*
-- **E: Metadata** — Human-readable reason, narrative, tags
-- **F: Cross-Domain** — On-chain anchors, registry entries
+- **A: Lineage** -- Predecessor/successor chains for agent migration
+- **B: State Snapshot** -- Hash-referenced state at exit time
+- **C: Dispute Bundle** -- Active disputes, evidence, challenge windows
+- **D: Economic** -- Asset manifests, obligations, exit fees ⚠️ *securities disclaimer applies*
+- **E: Metadata** -- Human-readable reason, narrative, tags
+- **F: Cross-Domain** -- On-chain anchors, registry entries
 
 ## Design Principles
 
@@ -130,13 +155,19 @@ All 410 tests pass across 25 test files.
 
 ## Links
 
-- **Spec:** [EXIT_SPEC v1.1](./EXIT_SPEC.md)
+- **Spec:** [EXIT_SPEC v1.2](./EXIT_SPEC.md)
 - **Paper:** [Cellar Door: Right of Passage](./docs/PAPER.md)
 - **Website:** [cellar-door.dev](https://cellar-door.dev)
 - **npm:** [cellar-door-exit](https://www.npmjs.com/package/cellar-door-exit)
 - **Getting Started:** [5-minute guide](./docs/GETTING_STARTED.md)
 - **Contributing:** [CONTRIBUTING.md](./CONTRIBUTING.md)
 - **Security:** [SECURITY.md](./SECURITY.md)
+
+## Legal Considerations
+
+EXIT markers used for admission decisions may trigger regulatory obligations. See [LEGAL.md](./LEGAL.md) for FCRA, GDPR, antitrust, and export control analysis. See [GDPR_GUIDE.md](./GDPR_GUIDE.md) for EU deployment guidance.
+
+This protocol provides a communication format. It does not constitute legal advice.
 
 ## License
 

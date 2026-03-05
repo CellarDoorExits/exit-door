@@ -341,6 +341,11 @@ export function validateMarker(marker: unknown): ValidationResult {
     }
   }
 
+  // §8.5: Missing expires field is non-compliant
+  if (m.expires === undefined) {
+    warnings.push("Missing required 'expires' field (§8.5). Implementations MUST populate with default: 730 days for voluntary exits, 365 days for involuntary exits.");
+  }
+
   // B15: Validate sunsetDate format when present
   if (m.sunsetDate !== undefined) {
     if (typeof m.sunsetDate !== "string" || !isValidISO8601(m.sunsetDate as string)) {
