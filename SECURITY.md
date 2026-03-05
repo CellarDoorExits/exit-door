@@ -65,7 +65,7 @@ These are documented honestly, not hidden:
 
 1. **Self-attestation model.** EXIT markers are signed by participants, not verified by independent witnesses. Trust requires higher-layer protocols (L1+). See spec Section 7.
 2. **TSA verification is structural only.** FreeTSA receipt structure is checked but cryptographic chain-of-trust to the TSA certificate is not verified in-library. See `checkTSAReceiptStructure()`.
-3. **No formal security audit.** 443 automated tests cover functionality but are not a substitute for professional security review.
+3. **No formal security audit.** 456 automated tests cover functionality but are not a substitute for professional security review.
 
 ## Dependency Security
 
