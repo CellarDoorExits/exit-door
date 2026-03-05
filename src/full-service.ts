@@ -152,7 +152,7 @@ export async function departAndAnchor(
   opts?: FullExitOpts,
 ): Promise<FullExitResult> {
   // Core flow — always works
-  const { marker, identity } = quickExit(origin, opts);
+  const { marker, identity } = await quickExit(origin, opts);
   const anchorHash = computeAnchorHash(marker);
 
   // M5: Redact private key unless explicitly requested

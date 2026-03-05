@@ -55,14 +55,14 @@ describe("Passage API (v0.2.0 rename)", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("quickDeparture creates valid marker", () => {
-    const result = quickDeparture("https://platform.example.com");
+  it("quickDeparture creates valid marker", async () => {
+    const result = await quickDeparture("https://platform.example.com");
     expect(result.marker.proof.proofValue).toBeTruthy();
     expect(result.identity.did).toMatch(/^did:key:z/);
   });
 
-  it("quickPassageVerify verifies marker (takes JSON string)", () => {
-    const { marker } = quickDeparture("https://test.com");
+  it("quickPassageVerify verifies marker (takes JSON string)", async () => {
+    const { marker } = await quickDeparture("https://test.com");
     const result = quickPassageVerify(JSON.stringify(marker));
     expect(result.valid).toBe(true);
   });
@@ -89,8 +89,8 @@ describe("Passage API (v0.2.0 rename)", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("type aliases are compatible", () => {
-    const { marker } = quickDeparture("https://test.com");
+  it("type aliases are compatible", async () => {
+    const { marker } = await quickDeparture("https://test.com");
     // DepartureMarker should be assignable to/from ExitMarker
     const departure: DepartureMarker = marker;
     expect(departure.proof).toBeDefined();
@@ -100,8 +100,8 @@ describe("Passage API (v0.2.0 rename)", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("old names still work (backward compat)", () => {
-    const result = quickExit("https://compat.example.com");
+  it("old names still work (backward compat)", async () => {
+    const result = await quickExit("https://compat.example.com");
     expect(result.marker.proof.proofValue).toBeTruthy();
   });
 });

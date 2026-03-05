@@ -36,7 +36,7 @@ function makeMarker(did: string) {
     subject: did,
     origin: "https://bench.example.com",
     exitType: ExitType.Voluntary,
-    status: ExitStatus.Final,
+    status: ExitStatus.GoodStanding,
   });
 }
 
@@ -79,7 +79,7 @@ describe("Performance Benchmarks", () => {
         subject: did,
         origin: "https://bench.example.com",
         exitType: ExitType.Emergency,
-        status: ExitStatus.Final,
+        status: ExitStatus.GoodStanding,
         emergencyJustification: "benchmark test",
       });
       await c.signMarker(m, privateKey, publicKey);

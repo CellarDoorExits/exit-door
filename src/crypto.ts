@@ -4,11 +4,18 @@
  * Ed25519 key generation, signing, verification, and DID encoding.
  */
 
+import { webcrypto } from "node:crypto";
 import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha512";
 
 import { p256 } from "@noble/curves/nist.js";
 import { sha256 } from "@noble/hashes/sha256";
+
+// Polyfill globalThis.crypto for Node 18 (required by @noble/ed25519 v2+)
+// Node 20+ exposes crypto globally; Node 18 does not.
+if (!globalThis.crypto) {
+  (globalThis as any).crypto = webcrypto;
+}
 
 // ed25519 requires sha512 sync
 ed.etc.sha512Sync = (...m: Uint8Array[]) => {
@@ -206,7 +213,11 @@ export function generateP256KeyPair(): KeyPair {
  */
 export function signP256(data: Uint8Array, privateKey: Uint8Array): Uint8Array {
   const hash = sha256(data);
-  return p256.sign(hash, privateKey);
+  const sig = p256.sign(hash, privateKey);
+  // PCR-01: Ensure we always return a plain Uint8Array of compact r||s bytes (64 bytes).
+  // noble/curves v1.x returns Uint8Array directly; future versions may return
+  // a Signature object — guard against both by copying to a fresh Uint8Array.
+  return Uint8Array.from(sig);
 }
 
 /**
