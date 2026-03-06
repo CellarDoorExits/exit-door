@@ -1,5 +1,8 @@
 # cellar-door-exit 𓉸
 
+> **⚠️ Pre-release software — no formal security audit has been conducted.** This project is published for transparency, review, and community feedback. It should not be used in production systems where security guarantees are required. If you find a vulnerability, please report it to hawthornhollows@gmail.com.
+
+
 **Right of Passage** -- verifiable EXIT markers for AI agents, platforms, and DAOs.
 
 ## Protocol Stack
