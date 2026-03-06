@@ -204,7 +204,7 @@ export async function requestTimestamp(
     headers: {
       "Content-Type": "application/timestamp-query",
     },
-    body: new Uint8Array(reqDer),
+    body: Uint8Array.from(reqDer),
     signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
   });
 
