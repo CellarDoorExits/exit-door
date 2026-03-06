@@ -125,7 +125,8 @@ describe("amendment system", () => {
 
       // Create amendments with different timestamps by overriding created
       const a1 = await createAmendment(marker, { status: ExitStatus.Disputed }, "first", issuerSigner);
-      // Small delay to ensure different timestamps
+      // Ensure different timestamps on fast CI runners
+      await new Promise((r) => setTimeout(r, 2));
       const a2 = await createAmendment(marker, { status: ExitStatus.GoodStanding }, "second override", issuerSigner);
 
       const result = applyAmendments(marker, [a2, a1]); // pass out of order
