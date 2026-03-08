@@ -1,20 +1,26 @@
 # cellar-door-exit 𓉸
 
+[![npm version](https://img.shields.io/npm/v/cellar-door-exit)](https://www.npmjs.com/package/cellar-door-exit)
+[![tests](https://img.shields.io/badge/tests-456_passing-brightgreen)]()
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
+[![NIST](https://img.shields.io/badge/NIST-submitted-orange)](https://cellar-door.dev/nist/)
+
 > **⚠️ Pre-release software — no formal security audit has been conducted.** This project is published for transparency, review, and community feedback. It should not be used in production systems where security guarantees are required. If you find a vulnerability, please report it to hawthornhollows@gmail.com.
 
+Vehicle registration for AI. Cryptographic proof that an agent left, when, and why.
 
-**Right of Passage** -- verifiable EXIT markers for AI agents, platforms, and DAOs.
+## 🗺️ Ecosystem
 
-## Protocol Stack
+| Package | Description | npm |
+|---------|-------------|-----|
+| **[cellar-door-exit](https://github.com/CellarDoorExits/exit-door)** | **Core protocol — departure markers** ← you are here | [![npm](https://img.shields.io/npm/v/cellar-door-exit)](https://www.npmjs.com/package/cellar-door-exit) |
+| [cellar-door-entry](https://github.com/CellarDoorExits/entry-door) | Arrival markers + admission | [![npm](https://img.shields.io/npm/v/cellar-door-entry)](https://www.npmjs.com/package/cellar-door-entry) |
+| [@cellar-door/mcp-server](https://github.com/CellarDoorExits/mcp-server) | MCP integration | [![npm](https://img.shields.io/npm/v/@cellar-door/mcp-server)](https://www.npmjs.com/package/@cellar-door/mcp-server) |
+| [@cellar-door/langchain](https://github.com/CellarDoorExits/langchain) | LangChain integration | [![npm](https://img.shields.io/npm/v/@cellar-door/langchain)](https://www.npmjs.com/package/@cellar-door/langchain) |
+| [@cellar-door/vercel-ai-sdk](https://github.com/CellarDoorExits/vercel-ai-sdk) | Vercel AI SDK integration | [![npm](https://img.shields.io/npm/v/@cellar-door/vercel-ai-sdk)](https://www.npmjs.com/package/@cellar-door/vercel-ai-sdk) |
+| [@cellar-door/openclaw-skill](https://github.com/CellarDoorExits/openclaw-skill) | OpenClaw agent skill | [![npm](https://img.shields.io/npm/v/@cellar-door/openclaw-skill)](https://www.npmjs.com/package/@cellar-door/openclaw-skill) |
 
-EXIT is a foundational protocol layer (L0) for agent lifecycle documentation:
-
-- **L0: EXIT** -- Departure records (this protocol)
-- **L1: Reputation/Naming** -- Trust scoring, identity reputation (future)
-- **L2: Insurance/Stakes** -- Economic guarantees, bonded attestation (future)
-- **L3: Governance** -- Collective decision-making, coordination (future)
-
-EXIT intentionally limits its scope to departure documentation. Trust scoring, reputation management, and economic mechanisms compose on top.
+**[Paper](https://cellar-door.dev/paper/) · [Website](https://cellar-door.dev) · [NIST Submission](https://cellar-door.dev/nist/) · [Policy Briefs](https://cellar-door.dev/briefs/)**
 
 ## The Problem
 
@@ -25,10 +31,6 @@ Today: it can't. There's no portable, verifiable proof of departure. No vehicle 
 ## The Solution
 
 EXIT markers: signed, portable, offline-verifiable proof of departure. A departure **ceremony** that produces a cryptographic record of *when* an agent left, *how* things stood, and *why*.
-
-**Amendments and Revocations:** v1.2 adds `MarkerAmendment` for correcting false markers and `MarkerRevocation` for invalidating fraudulent ones, without breaking content-addressing.
-
-**New in v1.2:** Algorithm agility with P-256 as co-default, MarkerAmendment and Revocation support, FIPS-compliant deployment path, and crypto-shredding for GDPR compliance.
 
 Think of it as a vehicle history report, but for AI agents. Except the agent signs it, not the dealer.
 
@@ -42,7 +44,7 @@ npm install cellar-door-exit
 import { quickExit, quickVerify, toJSON } from "cellar-door-exit";
 
 // Create + sign a departure marker in one line
-const { marker } = quickExit("did:web:platform.example");
+const { marker } = await quickExit("did:web:platform.example");
 console.log(toJSON(marker));
 
 // Verify it
@@ -55,14 +57,38 @@ That's it. Signed, verifiable proof of departure in 3 lines.
 **P-256 (FIPS-compliant):**
 
 ```typescript
-import { quickExit, quickVerify, toJSON } from "cellar-door-exit";
-
-const { marker } = quickExit("did:web:platform.example", { algorithm: "p256" });
-console.log(toJSON(marker));
-
+const { marker } = await quickExit("did:web:platform.example", { algorithm: "p256" });
 const result = quickVerify(toJSON(marker));
 console.log(result.valid); // true
 ```
+
+**Expected output:**
+
+```json
+{
+  "@context": "https://cellar-door.dev/v1",
+  "id": "urn:exit:...",
+  "subject": "did:key:z6Mk...",
+  "origin": "did:web:platform.example",
+  "timestamp": "2026-03-08T...",
+  "exitType": "voluntary",
+  "status": "good_standing",
+  "proof": { "type": "Ed25519Signature2020", "..." }
+}
+```
+
+See [`examples/`](./examples/) for runnable scripts.
+
+## Protocol Stack
+
+EXIT is a foundational protocol layer (L0) for agent lifecycle documentation:
+
+- **L0: EXIT** — Departure records (this protocol)
+- **L1: Reputation/Naming** — Trust scoring, identity reputation (future)
+- **L2: Insurance/Stakes** — Economic guarantees, bonded attestation (future)
+- **L3: Governance** — Collective decision-making, coordination (future)
+
+EXIT intentionally limits its scope to departure documentation. Trust scoring, reputation management, and economic mechanisms compose on top.
 
 ## How It Works
 
@@ -86,7 +112,9 @@ Every EXIT marker has **7 mandatory fields** (~335 bytes unsigned):
 | `status` | `good_standing` · `disputed` · `unverified` |
 | `proof` | Cryptographic signature |
 
-Contests don't block exit. A dispute changes `status` -- it never prevents departure.
+Contests don't block exit. A dispute changes `status`; it never prevents departure.
+
+**New in v1.2:** Algorithm agility with P-256 as co-default, MarkerAmendment and Revocation support, FIPS-compliant deployment path, and crypto-shredding for GDPR compliance.
 
 ## API
 
@@ -95,7 +123,7 @@ Contests don't block exit. A dispute changes `status` -- it never prevents depar
 ```typescript
 import { quickExit, quickVerify } from "cellar-door-exit";
 
-const { marker, identity } = quickExit(origin, opts?);
+const { marker, identity } = await quickExit(origin, opts?);
 const result = quickVerify(jsonString);
 ```
 
@@ -151,12 +179,12 @@ exit inspect marker.json             # Pretty-print all fields
 
 Six optional modules extend the core 7-field schema:
 
-- **A: Lineage** -- Predecessor/successor chains for agent migration
-- **B: State Snapshot** -- Hash-referenced state at exit time
-- **C: Dispute Bundle** -- Active disputes, evidence, challenge windows
-- **D: Economic** -- Asset manifests, obligations, exit fees ⚠️ *securities disclaimer applies*
-- **E: Metadata** -- Human-readable reason, narrative, tags
-- **F: Cross-Domain** -- On-chain anchors, registry entries
+- **A: Lineage** — Predecessor/successor chains for agent migration
+- **B: State Snapshot** — Hash-referenced state at exit time
+- **C: Dispute Bundle** — Active disputes, evidence, challenge windows
+- **D: Economic** — Asset manifests, obligations, exit fees ⚠️ *securities disclaimer applies*
+- **E: Metadata** — Human-readable reason, narrative, tags
+- **F: Cross-Domain** — On-chain anchors, registry entries
 
 ## Design Principles
 
