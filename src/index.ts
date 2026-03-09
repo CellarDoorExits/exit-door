@@ -382,6 +382,9 @@ export {
   type ResolvedMarker,
 } from "./amendment.js";
 
+// SQLite Claim Store (requires optional peer: better-sqlite3)
+export { SqliteClaimStore } from "./sqlite-store.js";
+
 // Amendment/Revocation Storage
 export {
   saveAmendment,
@@ -407,6 +410,16 @@ export {
   type SpanOptions,
   type TelemetryConfig,
 } from "./telemetry.js";
+
+// Counter-Signature & Witness
+export {
+  addCounterSignature,
+  addWitness,
+  verifyCounterSignature,
+  deriveStatusConfirmation,
+  type CounterSignOpts,
+  type CounterSignVerificationResult,
+} from "./countersign.js";
 
 // Amendment/Revocation Discovery (Section 6.3.1)
 export {

@@ -48,13 +48,23 @@
   },
   "devDependencies": {
     "@langchain/core": "^1.1.27",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.19.33",
+    "better-sqlite3": "^12.6.2",
     "fast-check": "^3.23.2",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "better-sqlite3": ">=9.0.0"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    }
   },
   "license": "Apache-2.0",
   "repository": {

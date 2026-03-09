@@ -227,6 +227,60 @@ EXIT markers used for admission decisions may trigger regulatory obligations. Se
 
 This protocol provides a communication format. It does not constitute legal advice.
 
+## Key Management
+
+EXIT uses a `Signer` interface as its KMS extension point. Any key management system can be integrated by implementing four methods:
+
+```typescript
+interface Signer {
+  readonly algorithm: "Ed25519" | "P-256";
+  sign(data: Uint8Array): Promise<Uint8Array> | Uint8Array;
+  verify(data: Uint8Array, signature: Uint8Array): Promise<boolean> | boolean;
+  did(): string;
+  publicKey(): Uint8Array;
+  destroy?(): void; // Zero key material (best-effort, optional for HSM signers)
+}
+```
+
+**Built-in signers** (Ed25519, P-256) hold keys in memory. For production, bring your own KMS:
+
+```typescript
+import { signMarkerWithSigner } from "cellar-door-exit";
+import type { Signer } from "cellar-door-exit";
+
+// Example: AWS KMS-backed signer
+class AwsKmsSigner implements Signer {
+  readonly algorithm = "P-256" as const;
+  constructor(private kmsClient: KMSClient, private keyId: string, private pubKey: Uint8Array) {}
+
+  async sign(data: Uint8Array): Promise<Uint8Array> {
+    const resp = await this.kmsClient.send(new SignCommand({
+      KeyId: this.keyId,
+      Message: data,
+      SigningAlgorithm: "ECDSA_SHA_256",
+      MessageType: "RAW",
+    }));
+    return new Uint8Array(resp.Signature!);
+  }
+
+  verify(data: Uint8Array, signature: Uint8Array): boolean {
+    // Delegate to local crypto for verification
+    return verifyP256(data, signature, this.pubKey);
+  }
+
+  did(): string { return didFromP256PublicKey(this.pubKey); }
+  publicKey(): Uint8Array { return this.pubKey; }
+  // No destroy() needed — private key never leaves KMS
+}
+
+const signer = new AwsKmsSigner(kmsClient, "alias/exit-signing-key", publicKeyBytes);
+const signed = await signMarkerWithSigner(marker, signer);
+```
+
+> **⚠️ `quickExit()` uses ephemeral keys** — a fresh keypair is generated per call and discarded. This is convenient for testing and demos but unsuitable for production, where key continuity matters for identity and trust. Use `createSigner()` or a KMS-backed `Signer` for real deployments.
+
+For key compromise threat analysis, see [THREAT_MODEL.md](./THREAT_MODEL.md#31-key-compromise--unlimited-forgery).
+
 ## License
 
 Apache-2.0
