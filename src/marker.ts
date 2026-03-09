@@ -170,5 +170,8 @@ export function addModule(
   key: ModuleKey,
   module: ModuleType
 ): ExitMarker {
-  return { ...marker, [key]: module };
+  const updated = { ...marker, [key]: module };
+  // Recompute content-addressed ID to reflect the new module
+  updated.id = `urn:exit:${computeId(updated)}`;
+  return updated;
 }

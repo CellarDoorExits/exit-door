@@ -19,6 +19,7 @@ Vehicle registration for AI. Cryptographic proof that an agent left, when, and w
 | [@cellar-door/langchain](https://github.com/CellarDoorExits/langchain) | LangChain integration | [![npm](https://img.shields.io/npm/v/@cellar-door/langchain)](https://www.npmjs.com/package/@cellar-door/langchain) |
 | [@cellar-door/vercel-ai-sdk](https://github.com/CellarDoorExits/vercel-ai-sdk) | Vercel AI SDK integration | [![npm](https://img.shields.io/npm/v/@cellar-door/vercel-ai-sdk)](https://www.npmjs.com/package/@cellar-door/vercel-ai-sdk) |
 | [@cellar-door/openclaw-skill](https://github.com/CellarDoorExits/openclaw-skill) | OpenClaw agent skill | [![npm](https://img.shields.io/npm/v/@cellar-door/openclaw-skill)](https://www.npmjs.com/package/@cellar-door/openclaw-skill) |
+| [@cellar-door/eas](https://github.com/CellarDoorExits/eas-adapter) | On-chain anchoring via EAS on Base L2 | [![npm](https://img.shields.io/npm/v/@cellar-door/eas)](https://www.npmjs.com/package/@cellar-door/eas) |
 
 **[Paper](https://cellar-door.dev/paper/) · [Website](https://cellar-door.dev) · [NIST Submission](https://cellar-door.dev/nist/) · [Policy Briefs](https://cellar-door.dev/briefs/)**
 
