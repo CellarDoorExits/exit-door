@@ -11,6 +11,7 @@ import { P256Signer } from "./signer.js";
 import { validateMarker } from "./validate.js";
 import { ExitType, ExitStatus, type ExitMarker } from "./types.js";
 import { ValidationError, VerificationError } from "./errors.js";
+import { addCounterSignature, type CounterSignOpts } from "./countersign.js";
 
 export interface Identity {
   did: string;
@@ -136,6 +137,50 @@ export function fromJSON(json: string): ExitMarker {
   }
 
   return parsed as ExitMarker;
+}
+
+export interface QuickCounterSignOpts extends CounterSignOpts {
+  /** Provide an existing keypair instead of generating an ephemeral one. */
+  privateKey?: Uint8Array;
+  publicKey?: Uint8Array;
+}
+
+export interface QuickCounterSignResult {
+  marker: ExitMarker;
+  identity: Identity;
+}
+
+/**
+ * Counter-sign an existing signed marker in one call.
+ *
+ * Generates an ephemeral Ed25519 keypair (or uses the provided one),
+ * adds a counter-signature, and returns the updated marker with the
+ * counter-signer's identity.
+ *
+ * @param marker - A signed EXIT marker to counter-sign.
+ * @param opts - Optional keypair and counter-sign options.
+ * @returns The counter-signed marker and the counter-signer's identity.
+ *
+ * @example
+ * ```ts
+ * const exit = await quickExit("https://platform.example.com");
+ * const countered = quickCounterSign(exit.marker);
+ * console.log(countered.marker.dispute?.counterpartyAcks?.length); // 1
+ * ```
+ */
+export function quickCounterSign(marker: ExitMarker, opts?: QuickCounterSignOpts): QuickCounterSignResult {
+  let identity: Identity;
+  if (opts?.privateKey && opts?.publicKey) {
+    const did = didFromPublicKey(opts.publicKey);
+    identity = { did, publicKey: opts.publicKey, privateKey: opts.privateKey };
+  } else {
+    identity = generateIdentity();
+  }
+
+  const { privateKey: _pk, publicKey: _pub, ...counterSignOpts } = opts ?? {};
+  const counterSigned = addCounterSignature(marker, identity.privateKey, identity.publicKey, counterSignOpts);
+
+  return { marker: counterSigned, identity };
 }
 
 /**

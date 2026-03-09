@@ -13,6 +13,7 @@ import { SigningError, VerificationError } from "./errors.js";
 import { proofTypeForAlgorithm, algorithmFromProofType } from "./signer.js";
 
 const DOMAIN_PREFIX = "exit-marker-v1.2:";
+const COUNTER_DOMAIN_PREFIX = "exit-counter-v1.2:";
 
 export interface CounterSignOpts {
   /** Role label for the counter-signer (e.g. "origin", "platform"). */
@@ -62,8 +63,9 @@ export function addCounterSignature(
         restWithoutAcks.dispute = disputeRest as ModuleC;
       }
     }
-    const canonical = canonicalize(restWithoutAcks);
-    const data = new TextEncoder().encode(DOMAIN_PREFIX + canonical);
+    const withPrimary = { ...restWithoutAcks, primaryProofValue: marker.proof.proofValue };
+    const canonical = canonicalize(withPrimary);
+    const data = new TextEncoder().encode(COUNTER_DOMAIN_PREFIX + canonical);
 
     const signature = sign(data, privateKey);
     const proofValue = Buffer.from(signature).toString("base64");
@@ -156,8 +158,10 @@ export function verifyCounterSignature(
         restWithoutAcks.dispute = disputeRest as ModuleC;
       }
     }
-    const canonical = canonicalize(restWithoutAcks);
-    const data = new TextEncoder().encode(DOMAIN_PREFIX + canonical);
+    const primaryProofValue = marker.proof?.proofValue ?? "";
+    const withPrimary = { ...restWithoutAcks, primaryProofValue };
+    const canonical = canonicalize(withPrimary);
+    const data = new TextEncoder().encode(COUNTER_DOMAIN_PREFIX + canonical);
     const signature = new Uint8Array(Buffer.from(ack.proofValue, "base64"));
 
     const alg = algorithmFromDid(ack.verificationMethod);

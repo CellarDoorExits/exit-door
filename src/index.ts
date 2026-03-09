@@ -129,11 +129,14 @@ export {
   quickExit,
   quickExitP256,
   quickVerify,
+  quickCounterSign,
   fromJSON,
   toJSON,
   type Identity,
   type QuickExitOpts,
   type QuickExitResult,
+  type QuickCounterSignOpts,
+  type QuickCounterSignResult,
 } from "./convenience.js";
 
 // Sprint 2: Context
