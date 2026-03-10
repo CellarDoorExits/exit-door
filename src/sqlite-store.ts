@@ -9,7 +9,8 @@ import type { ClaimStoreBackend, StoredClaim, ClaimQuery, ClaimStoreStats } from
 
 let Database: any;
 try {
-  Database = (await import("better-sqlite3")).default;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require("better-sqlite3");
 } catch {
   // better-sqlite3 is an optional peer dependency
 }
@@ -28,6 +29,7 @@ export class SqliteClaimStore implements ClaimStoreBackend {
     }
     this.db = new Database(filePath);
     this.db.pragma("journal_mode = WAL");
+    this.db.pragma("busy_timeout = 5000");
     this.init();
   }
 

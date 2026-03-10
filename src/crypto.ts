@@ -9,7 +9,6 @@ import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha512";
 
 import { p256 } from "@noble/curves/nist.js";
-import { sha256 } from "@noble/hashes/sha256";
 
 // Polyfill globalThis.crypto for Node 18 (required by @noble/ed25519 v2+)
 // Node 20+ exposes crypto globally; Node 18 does not.
@@ -212,8 +211,7 @@ export function generateP256KeyPair(): KeyPair {
  * This is the canonical format — NOT DER-encoded.
  */
 export function signP256(data: Uint8Array, privateKey: Uint8Array): Uint8Array {
-  const hash = sha256(data);
-  const sig = p256.sign(hash, privateKey);
+  const sig = p256.sign(data, privateKey, { prehash: true });
   // PCR-01: Ensure we always return a plain Uint8Array of compact r||s bytes (64 bytes).
   // noble/curves v1.x returns Uint8Array directly; future versions may return
   // a Signature object — guard against both by copying to a fresh Uint8Array.
@@ -226,8 +224,7 @@ export function signP256(data: Uint8Array, privateKey: Uint8Array): Uint8Array {
  */
 export function verifyP256(data: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): boolean {
   try {
-    const hash = sha256(data);
-    return p256.verify(signature, hash, publicKey);
+    return p256.verify(signature, data, publicKey, { prehash: true });
   } catch {
     return false;
   }
